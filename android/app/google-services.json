@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "118106961746",
+    "project_id": "royal-trader",
+    "storage_bucket": "royal-trader.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:118106961746:android:1d883ed83ba0e7343aac8b",
+        "android_client_info": {
+          "package_name": "com.example.royaltrader"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAm2dT3UKaA7TrCQDSUFENQKLeHze6SqFo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
