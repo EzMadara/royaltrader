@@ -468,13 +468,13 @@ Future<void> _generatePdf(
             pw.Table(
               border: pw.TableBorder.all(),
               columnWidths: {
-                0: const pw.FlexColumnWidth(1), // Code
-                1: const pw.FlexColumnWidth(1.5), // Company
-                2: const pw.FlexColumnWidth(1), // Size
-                3: const pw.FlexColumnWidth(1), // Tone
-                4: const pw.FlexColumnWidth(0.8), // Stock
-                5: const pw.FlexColumnWidth(1), // Date
-                6: const pw.FlexColumnWidth(1.5), // Image
+                0: const pw.FlexColumnWidth(1.5), // Image
+                1: const pw.FlexColumnWidth(1), // Code
+                2: const pw.FlexColumnWidth(1.5), // Company
+                3: const pw.FlexColumnWidth(1), // Size
+                4: const pw.FlexColumnWidth(1), // Tone
+                5: const pw.FlexColumnWidth(0.8), // Stock
+                6: const pw.FlexColumnWidth(1), // Date
               },
 
               tableWidth: pw.TableWidth.max,
@@ -483,19 +483,34 @@ Future<void> _generatePdf(
                 pw.TableRow(
                   decoration: const pw.BoxDecoration(color: PdfColors.grey300),
                   children: [
+                    _buildTableCell('Image', isHeader: true),
                     _buildTableCell('Code', isHeader: true),
                     _buildTableCell('Company', isHeader: true),
                     _buildTableCell('Size', isHeader: true),
                     _buildTableCell('Tone', isHeader: true),
                     _buildTableCell('Stock', isHeader: true),
                     _buildTableCell('Date', isHeader: true),
-                    _buildTableCell('Image', isHeader: true),
                   ],
                 ),
                 // Table data
                 ...tiles.map(
                   (tile) => pw.TableRow(
                     children: [
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child:
+                            tileImages.containsKey(tile.code)
+                                ? pw.Image(
+                                  tileImages[tile.code]!,
+                                  height: 80,
+                                  fit: pw.BoxFit.fill,
+                                )
+                                : pw.Container(
+                                  height: 40,
+                                  alignment: pw.Alignment.center,
+                                  child: pw.Text('No Image'),
+                                ),
+                      ),
                       _buildTableCell(tile.code),
                       _buildTableCell(tile.companyName),
                       _buildTableCell(tile.size),
@@ -503,17 +518,6 @@ Future<void> _generatePdf(
                       _buildTableCell(tile.stock.toString()),
                       _buildTableCell(
                         DateFormat('dd/MM/yyyy').format(tile.date),
-                      ),
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child:
-                            tileImages.containsKey(tile.code)
-                                ? pw.Image(tileImages[tile.code]!, height: 40)
-                                : pw.Container(
-                                  height: 40,
-                                  alignment: pw.Alignment.center,
-                                  child: pw.Text('No Image'),
-                                ),
                       ),
                     ],
                   ),
