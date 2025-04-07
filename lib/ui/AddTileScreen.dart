@@ -124,7 +124,7 @@ class _AddTileScreenState extends State<AddTileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Tile')),
+      appBar: AppBar(centerTitle: true, title: const Text('Add New Tile')),
       body: BlocListener<TileCubit, TileState>(
         listener: (context, state) {
           if (state.status == TileStatus.error) {
