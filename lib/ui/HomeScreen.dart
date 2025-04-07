@@ -34,6 +34,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
   Timer? _debounce;
+  bool _isGeneratingPdf = false;
 
   @override
   void initState() {
@@ -405,6 +406,13 @@ Future<void> _generatePdf(
   final state = context.read<TileCubit>().state;
   final tiles = allTiles ? state.tiles : state.filteredTiles;
 
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text("Generating PDF...."),
+      duration: Duration(seconds: 2),
+    ),
+  );
+
   final pdf = pw.Document();
   final companyFilter =
       state.filterCompany.isEmpty
@@ -417,10 +425,10 @@ Future<void> _generatePdf(
 
   final Map<String, pw.MemoryImage> tileImages = {};
 
+  // Load all tile images
   for (final tile in tiles) {
     try {
       if (tile.imageUrl != null && tile.imageUrl!.isNotEmpty) {
-        // final ref = FirebaseStorage.instance.ref().child(tile.imageUrl!);
         final url = tile.imageUrl;
         final response = await http.get(Uri.parse(url!));
         tileImages[tile.code] = pw.MemoryImage(response.bodyBytes);
@@ -430,93 +438,84 @@ Future<void> _generatePdf(
     }
   }
 
-  pdf.addPage(
-    pw.MultiPage(
-      header:
-          (context) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.center,
-            children: [
-              pw.Row(
-                mainAxisAlignment: pw.MainAxisAlignment.center,
-                children: [
-                  pw.Image(logoImage, width: 50, height: 50),
-                  pw.SizedBox(width: 10),
-                  pw.Text(
-                    'Royal Tiles And Sanitary',
-                    style: pw.TextStyle(
-                      fontSize: 18,
-                      fontWeight: pw.FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-              pw.SizedBox(height: 5),
-              pw.Text(
-                'Inventory Report - $companyFilter',
-                style: const pw.TextStyle(fontSize: 14),
-              ),
-              pw.SizedBox(height: 5),
-              pw.Text(
-                'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-                style: const pw.TextStyle(fontSize: 12),
-              ),
-              pw.Divider(),
-            ],
-          ),
-      build:
-          (context) => [
-            pw.Table(
-              border: pw.TableBorder.all(),
-              columnWidths: {
-                0: const pw.FlexColumnWidth(1.5), // Image
-                1: const pw.FlexColumnWidth(1), // Code
-                2: const pw.FlexColumnWidth(1.5), // Company
-                3: const pw.FlexColumnWidth(1), // Size
-                4: const pw.FlexColumnWidth(1), // Tone
-                5: const pw.FlexColumnWidth(0.8), // Stock
-                6: const pw.FlexColumnWidth(1), // Date
-              },
-
-              tableWidth: pw.TableWidth.max,
+  // Create a page for each tile
+  for (final tile in tiles) {
+    pdf.addPage(
+      pw.Page(
+        build:
+            (context) => pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                // Table header
-                pw.TableRow(
-                  decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                // Header
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.center,
                   children: [
-                    _buildTableCell('Image', isHeader: true),
-                    _buildTableCell('Code', isHeader: true),
-                    _buildTableCell('Company', isHeader: true),
-                    _buildTableCell('Size', isHeader: true),
-                    _buildTableCell('Tone', isHeader: true),
-                    _buildTableCell('Stock', isHeader: true),
-                    _buildTableCell('Date', isHeader: true),
+                    pw.Image(logoImage, width: 50, height: 50),
+                    pw.SizedBox(width: 10),
+                    pw.Text(
+                      'Royal Tiles And Sanitary',
+                      style: pw.TextStyle(
+                        fontSize: 18,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
                   ],
                 ),
-                // Table data
-                ...tiles.map(
-                  (tile) => pw.TableRow(
-                    children: [
-                      pw.Padding(
-                        padding: const pw.EdgeInsets.all(4),
-                        child:
-                            tileImages.containsKey(tile.code)
-                                ? pw.Image(
-                                  tileImages[tile.code]!,
-                                  height: 80,
-                                  fit: pw.BoxFit.fill,
-                                )
-                                : pw.Container(
-                                  height: 40,
-                                  alignment: pw.Alignment.center,
-                                  child: pw.Text('No Image'),
-                                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  'Tile Detail - $companyFilter',
+                  style: const pw.TextStyle(fontSize: 14),
+                ),
+                pw.SizedBox(height: 5),
+                pw.Text(
+                  'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+                pw.Divider(),
+                pw.SizedBox(height: 20),
+
+                // Large Image
+                tileImages.containsKey(tile.code)
+                    ? pw.Container(
+                      height: 300,
+                      width: 400,
+                      alignment: pw.Alignment.center,
+                      child: pw.Image(
+                        tileImages[tile.code]!,
+                        fit: pw.BoxFit.contain,
                       ),
-                      _buildTableCell(tile.code),
-                      _buildTableCell(tile.companyName),
-                      _buildTableCell(tile.size),
-                      _buildTableCell(tile.tone),
-                      _buildTableCell(tile.stock.toString()),
-                      _buildTableCell(
+                    )
+                    : pw.Container(
+                      height: 300,
+                      width: 400,
+                      alignment: pw.Alignment.center,
+                      decoration: pw.BoxDecoration(border: pw.Border.all()),
+                      child: pw.Text(
+                        'No Image Available',
+                        style: pw.TextStyle(fontSize: 16),
+                      ),
+                    ),
+                pw.SizedBox(height: 30),
+
+                // Tile Details in a styled container
+                pw.Container(
+                  padding: const pw.EdgeInsets.all(15),
+                  decoration: pw.BoxDecoration(
+                    border: pw.Border.all(width: 1),
+                    borderRadius: const pw.BorderRadius.all(
+                      pw.Radius.circular(10),
+                    ),
+                  ),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      _buildDetailRow('Code', tile.code),
+                      _buildDetailRow('Company', tile.companyName),
+                      _buildDetailRow('Size', tile.size),
+                      _buildDetailRow('Tone', tile.tone),
+                      _buildDetailRow('Stock', tile.stock.toString()),
+                      _buildDetailRow(
+                        'Date',
                         DateFormat('dd/MM/yyyy').format(tile.date),
                       ),
                     ],
@@ -524,16 +523,63 @@ Future<void> _generatePdf(
                 ),
               ],
             ),
-            pw.SizedBox(height: 20),
-            pw.Text(
-              'Total Items: ${tiles.length}',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-            ),
-            pw.Text(
-              'Total Stock: ${tiles.fold<int>(0, (sum, tile) => sum + tile.stock)}',
-              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-            ),
-          ],
+      ),
+    );
+  }
+
+  pdf.addPage(
+    pw.Page(
+      build:
+          (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              pw.Center(
+                child: pw.Column(
+                  children: [
+                    pw.Row(
+                      mainAxisAlignment: pw.MainAxisAlignment.center,
+                      children: [
+                        pw.Image(logoImage, width: 50, height: 50),
+                        pw.SizedBox(width: 10),
+                        pw.Text(
+                          'Royal Tiles And Sanitary',
+                          style: pw.TextStyle(
+                            fontSize: 18,
+                            fontWeight: pw.FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'Inventory Summary - $companyFilter',
+                      style: const pw.TextStyle(fontSize: 14),
+                    ),
+                    pw.SizedBox(height: 5),
+                    pw.Text(
+                      'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                      style: const pw.TextStyle(fontSize: 12),
+                    ),
+                  ],
+                ),
+              ),
+              pw.Divider(),
+              pw.SizedBox(height: 20),
+
+              pw.Text(
+                'Summary Information:',
+                style: pw.TextStyle(
+                  fontSize: 16,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 10),
+              pw.Text('Total Items: ${tiles.length}'),
+              pw.Text(
+                'Total Stock: ${tiles.fold<int>(0, (sum, tile) => sum + tile.stock)}',
+              ),
+            ],
+          ),
     ),
   );
 
@@ -544,19 +590,34 @@ Future<void> _generatePdf(
   );
 }
 
-pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
+pw.Widget _buildDetailRow(String label, String value) {
   return pw.Padding(
-    padding: const pw.EdgeInsets.all(5),
-    child: pw.Text(
-      text,
-      style: isHeader ? pw.TextStyle(fontWeight: pw.FontWeight.bold) : null,
+    padding: const pw.EdgeInsets.symmetric(vertical: 5),
+    child: pw.Row(
+      children: [
+        pw.Container(
+          width: 100,
+          child: pw.Text(
+            '$label:',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+          ),
+        ),
+        pw.Expanded(
+          child: pw.Text(value, style: const pw.TextStyle(fontSize: 14)),
+        ),
+      ],
     ),
   );
 }
 
-void _logout(BuildContext context) {
-  Navigator.pop(context);
-  // Sign out logic
+pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
+  return pw.Padding(
+    padding: const pw.EdgeInsets.all(6),
+    child: pw.Text(
+      text,
+      style: pw.TextStyle(fontWeight: isHeader ? pw.FontWeight.bold : null),
+    ),
+  );
 }
 
 Widget _buildDrawer(BuildContext context) {
