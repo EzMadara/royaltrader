@@ -1,6 +1,6 @@
-// lib/ui/tiles/TileDetailsScreen.dart
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:royaltrader/config/routes/routes_name.dart';
@@ -14,7 +14,12 @@ class TileDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Tile Details')),
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: const Text('Tile Details'),
+        centerTitle: true,
+      ),
+
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -24,28 +29,27 @@ class TileDetailsScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 250,
                 decoration: const BoxDecoration(color: Colors.black),
-                child: Image.network(
-                  tile.imageUrl!,
-                  fit: BoxFit.contain,
-                  errorBuilder: (context, error, stackTrace) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
-                          Icon(
-                            Icons.image_not_supported,
-                            size: 60,
-                            color: Colors.white54,
-                          ),
-                          SizedBox(height: 10),
-                          Text(
-                            'Image not available',
-                            style: TextStyle(color: Colors.white70),
-                          ),
-                        ],
+                child: CachedNetworkImage(
+                  imageUrl: tile.imageUrl ?? '',
+                  fit: BoxFit.fill,
+                  errorWidget:
+                      (context, url, error) => Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: const [
+                            Icon(
+                              Icons.image_not_supported,
+                              size: 60,
+                              color: Colors.white54,
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              'Image not available',
+                              style: TextStyle(color: Colors.white70),
+                            ),
+                          ],
+                        ),
                       ),
-                    );
-                  },
                 ),
               )
             else
@@ -68,6 +72,7 @@ class TileDetailsScreen extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Card(
+                color: Colors.white,
                 elevation: 4,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -100,10 +105,9 @@ class TileDetailsScreen extends StatelessWidget {
                       _buildDetailRow('Tone', tile.tone),
                       _buildDetailRow('Stock', tile.stock.toString()),
                       _buildDetailRow(
-                        'Date Added',
+                        'Date',
                         DateFormat('dd MMMM, yyyy').format(tile.date),
                       ),
-                      _buildDetailRow('ID', tile.id),
                     ],
                   ),
                 ),
@@ -133,24 +137,7 @@ class TileDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('ttttdit'),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.tilesList,
-                          arguments: tile,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
+
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.arrow_back),

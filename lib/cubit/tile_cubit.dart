@@ -8,15 +8,14 @@ class TileCubit extends Cubit<TileState> {
 
   TileCubit(this._repository) : super(const TileState());
 
-  // Load all tiles
   Future<void> loadTiles() async {
-    emit(state.copyWith(status: TileStatus.loading));
     try {
-      final tiles = await _repository.getAllTiles();
+      emit(state.copyWith(status: TileStatus.loading));
+      final tiles = await _repository.getUserTiles();
       emit(
         state.copyWith(
           tiles: tiles,
-          filteredTiles: _applyFilter(tiles, state.filterCompany),
+          filteredTiles: tiles,
           status: TileStatus.loaded,
         ),
       );
@@ -30,14 +29,52 @@ class TileCubit extends Cubit<TileState> {
     }
   }
 
+  // Future<void> loadTiles() async {
+  //   emit(state.copyWith(status: TileStatus.loading));
+  //   try {
+  //     final tiles = await _repository.getAllTiles();
+  //     emit(
+  //       state.copyWith(
+  //         tiles: tiles,
+  //         filteredTiles: _applyFilter(tiles, state.filterCompany),
+  //         status: TileStatus.loaded,
+  //       ),
+  //     );
+  //   } catch (e) {
+  //     emit(
+  //       state.copyWith(
+  //         status: TileStatus.error,
+  //         errorMessage: 'Failed to load tiles: $e',
+  //       ),
+  //     );
+  //   }
+  // }
+
   // Filter tiles by company name
-  void filterByCompany(String companyName) {
-    emit(
-      state.copyWith(
-        filterCompany: companyName,
-        filteredTiles: _applyFilter(state.tiles, companyName),
-      ),
-    );
+  // void filterByCompany(String companyName) {
+  //   emit(
+  //     state.copyWith(
+  //       filterCompany: companyName,
+  //       filteredTiles: _applyFilter(state.tiles, companyName),
+  //     ),
+  //   );
+  // }
+
+  Future<void> searchTilesByCompany(String companyName) async {
+    if (companyName.isEmpty) {
+      emit(
+        state.copyWith(filteredTiles: state.tiles, status: TileStatus.loaded),
+      );
+    } else {
+      final filtered =
+          state.tiles.where((tile) {
+            return tile.companyName.toLowerCase().contains(
+              companyName.toLowerCase(),
+            );
+          }).toList();
+
+      emit(state.copyWith(filteredTiles: filtered, status: TileStatus.loaded));
+    }
   }
 
   // Helper method to apply filter
@@ -128,6 +165,4 @@ class TileCubit extends Cubit<TileState> {
       );
     }
   }
-
-  void stopLoading() {}
 }

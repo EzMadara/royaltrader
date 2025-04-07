@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:royaltrader/config/routes/routes.dart';
 import 'package:royaltrader/config/routes/routes_name.dart';
+import 'package:royaltrader/cubit/auth_cubit.dart';
 import 'package:royaltrader/cubit/tile_cubit.dart';
 import 'package:royaltrader/firebase_options.dart';
 import 'package:royaltrader/repositories/tile_repository.dart';
@@ -23,7 +24,7 @@ Future<void> main() async {
           create:
               (_) => TileCubit(tileRepository)..loadTiles(), // Or init logic
         ),
-        // Add more cubits here if needed
+        BlocProvider<AuthCubit>(create: (_) => AuthCubit()),
       ],
       child: const MyApp(),
     ),

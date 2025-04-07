@@ -137,7 +137,7 @@ class _EditTileScreenState extends State<EditTileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Edit Tile')),
+      appBar: AppBar(centerTitle: true, title: const Text('Edit Tile')),
       body: BlocListener<TileCubit, TileState>(
         listener: (context, state) {
           if (state.status == TileStatus.error) {

@@ -1,15 +1,18 @@
 // 🔹 File: lib/ui/HomeScreen.dart
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:royaltrader/config/routes/routes_name.dart';
+import 'package:royaltrader/cubit/auth_cubit.dart';
 import 'package:royaltrader/cubit/tile_cubit.dart';
 import 'package:royaltrader/cubit/tile_state.dart'
     show TileError, TileLoaded, TileLoading, TileState, TileStatus;
@@ -30,20 +33,26 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     context.read<TileCubit>().loadTiles();
-
     _searchController.addListener(() {
-      context.read<TileCubit>().filterByCompany(_searchController.text);
+      if (_searchController.text !=
+          context.read<TileCubit>().state.filterCompany) {
+        context.read<TileCubit>().searchTilesByCompany(_searchController.text);
+      }
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+
     _searchController.dispose();
+
     super.dispose();
   }
 
@@ -190,73 +199,141 @@ Widget _buildTileCard(BuildContext context, Tile tile) {
       );
     },
     child: Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
-      clipBehavior: Clip.antiAliasWithSaveLayer,
+      elevation: 4,
+      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      color: Colors.white,
+      shadowColor: Colors.black38,
       child: Padding(
-        padding: const EdgeInsets.all(15),
+        padding: const EdgeInsets.all(16),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            CachedNetworkImage(
-              imageUrl: tile.imageUrl ?? '',
-              height: 100,
-              width: 100,
-              fit: BoxFit.cover,
-              placeholder:
-                  (context, url) => Skeletonizer(
-                    enabled: true,
-                    effect: ShimmerEffect(
-                      baseColor: Colors.grey.shade300,
-                      highlightColor: Colors.grey.shade100,
-                      duration: const Duration(seconds: 2),
+            // Image with rounded corners
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: CachedNetworkImage(
+                imageUrl: tile.imageUrl ?? '',
+                height: 100,
+                width: 100,
+                fit: BoxFit.cover,
+                placeholder:
+                    (context, url) => Skeletonizer(
+                      enabled: true,
+                      effect: ShimmerEffect(
+                        baseColor: Colors.grey.shade300,
+                        highlightColor: Colors.grey.shade100,
+                        duration: const Duration(seconds: 2),
+                      ),
+                      child: Container(
+                        height: 100,
+                        width: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade300,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
                     ),
-                    child: Container(
+                errorWidget:
+                    (context, url, error) => Container(
                       height: 100,
                       width: 100,
-                      color: Colors.grey.shade300,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.broken_image, color: Colors.red),
                     ),
-                  ),
-              errorWidget:
-                  (context, url, error) => Container(
-                    height: 100,
-                    width: 100,
-                    color: Colors.grey.shade200,
-                    child: const Icon(Icons.broken_image, color: Colors.red),
-                  ),
+              ),
             ),
 
-            Container(width: 20),
+            const SizedBox(width: 16),
+
+            // Content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Container(height: 5),
                   Text(
                     tile.companyName,
-                    style: Theme.of(
-                      context,
-                    ).textTheme.titleMedium!.copyWith(color: Colors.grey[800]),
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[800],
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                  Container(height: 5),
-                  Text(
-                    'Code: ${tile.code} - Size: ${tile.size}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodyMedium!.copyWith(color: Colors.grey[500]),
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      Icon(Icons.qr_code, size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Code: ${tile.code}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Icon(Icons.straighten, size: 14, color: Colors.grey[600]),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Size: ${tile.size}',
+                        style: GoogleFonts.poppins(
+                          fontSize: 13,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
                   ),
-                  Container(height: 5),
-                  Text(
-                    'Tone: ${tile.tone}',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.bodySmall!.copyWith(color: Colors.grey[700]),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.blue[50],
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.blue[100]!),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.palette, size: 14, color: Colors.blue[700]),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Tone: ${tile.tone}',
+                          style: GoogleFonts.poppins(
+                            fontSize: 12,
+                            color: Colors.blue[700],
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                  Container(height: 10),
+                  const SizedBox(height: 8),
                   Align(
                     alignment: Alignment.centerRight,
-                    child: IconButton(
-                      icon: const Icon(Icons.delete),
-                      onPressed: () => _showDeleteConfirmation(context, tile),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(20),
+                        onTap: () => _showDeleteConfirmation(context, tile),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          child: Icon(
+                            Icons.delete_outline,
+                            color: Colors.red[400],
+                            size: 20,
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ],
@@ -343,9 +420,9 @@ Future<void> _generatePdf(
   for (final tile in tiles) {
     try {
       if (tile.imageUrl != null && tile.imageUrl!.isNotEmpty) {
-        final ref = FirebaseStorage.instance.ref().child(tile.imageUrl!);
-        final url = await ref.getDownloadURL();
-        final response = await http.get(Uri.parse(url));
+        // final ref = FirebaseStorage.instance.ref().child(tile.imageUrl!);
+        final url = tile.imageUrl;
+        final response = await http.get(Uri.parse(url!));
         tileImages[tile.code] = pw.MemoryImage(response.bodyBytes);
       }
     } catch (e) {
@@ -510,7 +587,14 @@ Widget _buildDrawer(BuildContext context) {
         ListTile(
           leading: const Icon(Icons.logout),
           title: Text("Logout", style: Theme.of(context).textTheme.bodyMedium),
-          onTap: () => _logout(context),
+          onTap: () {
+            context.read<AuthCubit>().signOut();
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              RoutesName.loginScreen,
+              (route) => false,
+            );
+          },
         ),
       ],
     ),

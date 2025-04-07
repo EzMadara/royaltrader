@@ -65,7 +65,6 @@ class ForgotMyPassword extends StatelessWidget {
                   labelText: 'Email',
                   type: TextInputType.emailAddress,
                   helpText: 'Enter your email',
-                  Function: (value) {},
                 ),
                 SizedBox(height: 30.h),
                 AppButtonWidget(

@@ -22,7 +22,6 @@ class AppTextField extends StatelessWidget {
     this.isFloatLabel = true,
     this.onChanged,
     this.controller,
-    required String? Function(dynamic value),
   });
 
   @override

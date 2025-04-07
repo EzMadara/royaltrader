@@ -1,6 +1,7 @@
 // lib/ui/tiles/AddTileScreen.dart
 import 'dart:io';
 
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -91,8 +92,9 @@ class _AddTileScreenState extends State<AddTileScreen> {
 
   Future<void> _saveTile() async {
     if (_formKey.currentState!.validate()) {
+      final currentUser = FirebaseAuth.instance.currentUser;
+      print(currentUser!.uid);
       String? imageUrl;
-
       if (_imagePath != null) {
         imageUrl = await _uploadImageToFirebase(File(_imagePath!));
         print(imageUrl);
@@ -106,7 +108,8 @@ class _AddTileScreenState extends State<AddTileScreen> {
         tone: _toneController.text,
         stock: int.parse(_stockController.text),
         date: _selectedDate,
-        imageUrl: imageUrl, // only Firebase URL now
+        imageUrl: imageUrl,
+        userId: currentUser.uid,
       );
 
       context.read<TileCubit>().addTile(newTile).then((_) {
@@ -121,7 +124,7 @@ class _AddTileScreenState extends State<AddTileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Add New Tile')),
+      appBar: AppBar(centerTitle: true, title: const Text('Add New Tile')),
       body: BlocListener<TileCubit, TileState>(
         listener: (context, state) {
           if (state.status == TileStatus.error) {

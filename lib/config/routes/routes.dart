@@ -4,6 +4,7 @@ import 'package:royaltrader/models/tile_model.dart';
 import 'package:royaltrader/ui/ForgotMyPassword.dart';
 import 'package:royaltrader/ui/HomeScreen.dart';
 import 'package:royaltrader/ui/LoginScreen.dart';
+import 'package:royaltrader/ui/RegisterScreen.dart';
 import 'package:royaltrader/ui/SplashScreen.dart';
 import 'package:royaltrader/ui/TilesListScreen.dart';
 import 'package:royaltrader/ui/AddTileScreen.dart';
@@ -19,6 +20,8 @@ class Routes {
         return MaterialPageRoute(builder: (context) => const LoginScreen());
       case RoutesName.homeScreen:
         return MaterialPageRoute(builder: (context) => const HomeScreen());
+      case RoutesName.registerScreen:
+        return MaterialPageRoute(builder: (context) => const RegisterScreen());
       case RoutesName.forgotMyPassword:
         return MaterialPageRoute(
           builder: (context) => const ForgotMyPassword(),

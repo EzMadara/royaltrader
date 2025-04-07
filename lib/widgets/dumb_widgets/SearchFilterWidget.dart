@@ -21,7 +21,7 @@ class SearchFilterWidget extends StatelessWidget {
           suffixIcon: Icon(Icons.search, color: Theme.of(context).primaryColor),
         ),
         onChanged: (value) {
-          context.read<TileCubit>().filterByCompany(value);
+          context.read<TileCubit>().searchTilesByCompany(value);
         },
       ),
     );
