@@ -57,20 +57,6 @@ class AppTileWidget extends StatelessWidget {
   }
 
   Widget _buildTileImage() {
-    // Check for local file first (newly added tiles)
-    if (tile.imagePath != null && tile.imagePath!.isNotEmpty) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          File(tile.imagePath!),
-          width: 60,
-          height: 60,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-
-    // Then check for remote URL (tiles from database)
     if (tile.imageUrl!.isNotEmpty) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),

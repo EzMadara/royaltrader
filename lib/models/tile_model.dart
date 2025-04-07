@@ -9,8 +9,8 @@ class Tile {
   final String companyName;
   final String tone;
   final int stock;
-  final String? imagePath;
   final String? imageUrl;
+  final String userId;
 
   Tile({
     required this.id,
@@ -20,8 +20,8 @@ class Tile {
     required this.companyName,
     required this.tone,
     required this.stock,
-    this.imagePath,
     this.imageUrl,
+    required this.userId,
   });
 
   Tile copyWith({
@@ -32,8 +32,8 @@ class Tile {
     String? companyName,
     String? tone,
     int? stock,
-    String? imagePath,
     String? imageUrl,
+    String? userId,
   }) {
     return Tile(
       id: id ?? this.id,
@@ -43,8 +43,8 @@ class Tile {
       companyName: companyName ?? this.companyName,
       tone: tone ?? this.tone,
       stock: stock ?? this.stock,
-      imagePath: imagePath ?? this.imagePath,
       imageUrl: imageUrl ?? this.imageUrl,
+      userId: userId ?? this.userId,
     );
   }
 
@@ -57,8 +57,8 @@ class Tile {
       'companyName': companyName,
       'tone': tone,
       'stock': stock,
-      'imagePath': imagePath,
       'imageUrl': imageUrl,
+      'userId': userId,
     };
   }
 
@@ -71,8 +71,8 @@ class Tile {
       companyName: map['companyName'] ?? '',
       tone: map['tone'] ?? '',
       stock: map['stock'] ?? 0,
-      imagePath: map['imagePath'],
       imageUrl: map['imageUrl'],
+      userId: map['userId'],
     );
   }
 
@@ -82,7 +82,7 @@ class Tile {
 
   @override
   String toString() {
-    return 'Tile(id: $id, date: $date, code: $code, size: $size, companyName: $companyName, tone: $tone, stock: $stock, imagePath: $imagePath)';
+    return 'Tile(id: $id, date: $date, code: $code, size: $size, companyName: $companyName, tone: $tone, stock: $stock, userId: $userId)';
   }
 
   @override
@@ -96,8 +96,8 @@ class Tile {
         other.size == size &&
         other.companyName == companyName &&
         other.tone == tone &&
-        other.stock == stock &&
-        other.imagePath == imagePath;
+        other.userId == userId &&
+        other.stock == stock;
   }
 
   @override
@@ -108,7 +108,7 @@ class Tile {
         size.hashCode ^
         companyName.hashCode ^
         tone.hashCode ^
-        stock.hashCode ^
-        imagePath.hashCode;
+        userId.hashCode ^
+        stock.hashCode;
   }
 }

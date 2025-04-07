@@ -10,6 +10,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:royaltrader/config/routes/routes_name.dart';
+import 'package:royaltrader/cubit/auth_cubit.dart';
 import 'package:royaltrader/cubit/tile_cubit.dart';
 import 'package:royaltrader/cubit/tile_state.dart'
     show TileError, TileLoaded, TileLoading, TileState, TileStatus;
@@ -35,9 +36,8 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     context.read<TileCubit>().loadTiles();
-
     _searchController.addListener(() {
-      context.read<TileCubit>().filterByCompany(_searchController.text);
+      context.read<TileCubit>().searchTilesByCompany(_searchController.text);
     });
   }
 
@@ -510,7 +510,14 @@ Widget _buildDrawer(BuildContext context) {
         ListTile(
           leading: const Icon(Icons.logout),
           title: Text("Logout", style: Theme.of(context).textTheme.bodyMedium),
-          onTap: () => _logout(context),
+          onTap: () {
+            context.read<AuthCubit>().signOut();
+            Navigator.pushNamedAndRemoveUntil(
+              context,
+              RoutesName.loginScreen,
+              (route) => false,
+            );
+          },
         ),
       ],
     ),

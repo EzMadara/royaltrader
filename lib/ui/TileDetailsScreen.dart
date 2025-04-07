@@ -133,24 +133,7 @@ class TileDetailsScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      icon: const Icon(Icons.edit),
-                      label: const Text('ttttdit'),
-                      onPressed: () {
-                        Navigator.pushNamed(
-                          context,
-                          RoutesName.tilesList,
-                          arguments: tile,
-                        );
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
+
                   Expanded(
                     child: ElevatedButton.icon(
                       icon: const Icon(Icons.arrow_back),
