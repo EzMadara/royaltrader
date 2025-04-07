@@ -1,6 +1,7 @@
 // lib/ui/tiles/AddTileScreen.dart
 import 'dart:io';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,10 @@ import 'package:royaltrader/cubit/tile_state.dart';
 import 'package:royaltrader/models/tile_model.dart';
 import 'package:royaltrader/widgets/dumb_widgets/app_text_field2_widget.dart';
 import 'package:royaltrader/widgets/dumb_widgets/app_text_field_widget.dart';
+import 'package:royaltrader/widgets/dumb_widgets/company_dropdown.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:uuid/uuid.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class AddTileScreen extends StatefulWidget {
   const AddTileScreen({Key? key}) : super(key: key);
@@ -22,9 +27,9 @@ class _AddTileScreenState extends State<AddTileScreen> {
   final _formKey = GlobalKey<FormState>();
   final _codeController = TextEditingController();
   final _sizeController = TextEditingController();
-  final _companyNameController = TextEditingController();
   final _toneController = TextEditingController();
   final _stockController = TextEditingController();
+  String? _selectedCompany;
 
   DateTime _selectedDate = DateTime.now();
   String? _imagePath;
@@ -33,7 +38,6 @@ class _AddTileScreenState extends State<AddTileScreen> {
   void dispose() {
     _codeController.dispose();
     _sizeController.dispose();
-    _companyNameController.dispose();
     _toneController.dispose();
     _stockController.dispose();
     super.dispose();
@@ -64,17 +68,45 @@ class _AddTileScreenState extends State<AddTileScreen> {
     }
   }
 
-  void _saveTile() {
+  Future<String?> _uploadImageToFirebase(File imageFile) async {
+    try {
+      print("Uploading image...");
+      String fileName = Uuid().v4();
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'tiles_images/$fileName.jpg',
+      );
+
+      final uploadTask = await storageRef.putFile(imageFile);
+
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      print(downloadUrl);
+
+      print("Upload successful! URL: $downloadUrl");
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  Future<void> _saveTile() async {
     if (_formKey.currentState!.validate()) {
+      String? imageUrl;
+
+      if (_imagePath != null) {
+        imageUrl = await _uploadImageToFirebase(File(_imagePath!));
+        print(imageUrl);
+      }
+
       final newTile = Tile(
-        id: '', // ID will be generated in repository
+        id: '', // to be set in backend
         code: _codeController.text,
         size: _sizeController.text,
-        companyName: _companyNameController.text,
+        companyName: _selectedCompany ?? '',
         tone: _toneController.text,
         stock: int.parse(_stockController.text),
         date: _selectedDate,
-        imagePath: _imagePath,
+        imageUrl: imageUrl, // only Firebase URL now
       );
 
       context.read<TileCubit>().addTile(newTile).then((_) {
@@ -151,18 +183,15 @@ class _AddTileScreenState extends State<AddTileScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AppTextField2(
-                  labelText: 'Company Name',
-                  helpText: 'Enter company name',
-                  isFloatLabel: false,
-                  controller: _companyNameController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter company name';
-                    }
-                    return null;
+                DropdownField(
+                  value: _selectedCompany,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCompany = value;
+                    });
                   },
                 ),
+
                 const SizedBox(height: 16),
                 AppTextField2(
                   labelText: 'Size',
@@ -229,24 +258,29 @@ class _AddTileScreenState extends State<AddTileScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: _saveTile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: BlocBuilder<TileCubit, TileState>(
-                      builder: (context, state) {
-                        return state.status == TileStatus.loading
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                            : const Text('Save Tile');
-                      },
-                    ),
+                  child: BlocBuilder<TileCubit, TileState>(
+                    builder: (context, state) {
+                      final isLoading = state.status == TileStatus.loading;
+                      return Skeletonizer(
+                        enabled: isLoading,
+                        // Optional configuration for skeletonizer effect
+                        effect: ShimmerEffect(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                        ),
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _saveTile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(isLoading ? 'Saving...' : 'Save Tile'),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],

@@ -55,22 +55,33 @@ class AppTextField2 extends StatelessWidget {
       decoration:
           decoration ??
           InputDecoration(
-            labelText: isFloatLabel ? labelText : null,
+            labelText: labelText,
             hintText: helpText,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+            suffixIcon: suffixIcon,
+            floatingLabelBehavior:
+                isFloatLabel
+                    ? FloatingLabelBehavior.always
+                    : FloatingLabelBehavior.never,
+            filled: true,
+            fillColor: Colors.white,
+            enabledBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: Color(0xFFCCD0D4),
+                width: 1.1,
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: const BorderSide(
+                color: Color(0xFFCCD0D4),
+                width: 1.1,
+              ),
+              borderRadius: BorderRadius.circular(4),
+            ),
             contentPadding: const EdgeInsets.symmetric(
               horizontal: 16,
               vertical: 16,
             ),
-            suffixIcon: suffixIcon,
-            labelStyle: TextStyle(color: Theme.of(context).primaryColor),
-            // Used when isFloatLabel is false
-            filled: !isFloatLabel,
-            fillColor: !isFloatLabel ? Colors.grey.shade100 : null,
-            floatingLabelBehavior:
-                isFloatLabel
-                    ? FloatingLabelBehavior.auto
-                    : FloatingLabelBehavior.never,
           ),
       style: const TextStyle(fontSize: 16),
     );

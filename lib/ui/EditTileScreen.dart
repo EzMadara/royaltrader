@@ -1,6 +1,7 @@
 // lib/ui/tiles/EditTileScreen.dart
 import 'dart:io';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -10,6 +11,9 @@ import 'package:royaltrader/cubit/tile_state.dart';
 import 'package:royaltrader/models/tile_model.dart';
 import 'package:royaltrader/widgets/dumb_widgets/app_text_field2_widget.dart';
 import 'package:royaltrader/widgets/dumb_widgets/app_text_field_widget.dart';
+import 'package:royaltrader/widgets/dumb_widgets/company_dropdown.dart';
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:uuid/uuid.dart';
 
 class EditTileScreen extends StatefulWidget {
   final Tile tile;
@@ -24,35 +28,32 @@ class _EditTileScreenState extends State<EditTileScreen> {
   final _formKey = GlobalKey<FormState>();
   late final TextEditingController _codeController;
   late final TextEditingController _sizeController;
-  late final TextEditingController _companyNameController;
   late final TextEditingController _toneController;
   late final TextEditingController _stockController;
+  String? _selectedCompany;
 
   late DateTime _selectedDate;
-  String? _imagePath;
+  String? _imageUrl;
+  File? _newImageFile;
 
   @override
   void initState() {
     super.initState();
-    // Initialize controllers with existing tile data
     _codeController = TextEditingController(text: widget.tile.code);
     _sizeController = TextEditingController(text: widget.tile.size);
-    _companyNameController = TextEditingController(
-      text: widget.tile.companyName,
-    );
+    _selectedCompany = widget.tile.companyName;
     _toneController = TextEditingController(text: widget.tile.tone);
     _stockController = TextEditingController(
       text: widget.tile.stock.toString(),
     );
     _selectedDate = widget.tile.date;
-    _imagePath = widget.tile.imagePath;
+    _imageUrl = widget.tile.imageUrl;
   }
 
   @override
   void dispose() {
     _codeController.dispose();
     _sizeController.dispose();
-    _companyNameController.dispose();
     _toneController.dispose();
     _stockController.dispose();
     super.dispose();
@@ -64,7 +65,7 @@ class _EditTileScreenState extends State<EditTileScreen> {
 
     if (image != null) {
       setState(() {
-        _imagePath = image.path;
+        _newImageFile = File(image.path);
       });
     }
   }
@@ -83,22 +84,51 @@ class _EditTileScreenState extends State<EditTileScreen> {
     }
   }
 
-  void _updateTile() {
+  Future<String?> _uploadImageToFirebase(File imageFile) async {
+    try {
+      print("Uploading image...");
+      String fileName = Uuid().v4();
+      final storageRef = FirebaseStorage.instance.ref().child(
+        'tiles_images/$fileName.jpg',
+      );
+
+      final uploadTask = await storageRef.putFile(imageFile);
+
+      final downloadUrl = await uploadTask.ref.getDownloadURL();
+      print(downloadUrl);
+
+      print("Upload successful! URL: $downloadUrl");
+      return downloadUrl;
+    } catch (e) {
+      print('Error uploading image: $e');
+      return null;
+    }
+  }
+
+  Future<void> _updateTile() async {
     if (_formKey.currentState!.validate()) {
+      String? imageUrl = _imageUrl;
+
+      if (_newImageFile != null) {
+        imageUrl = await _uploadImageToFirebase(_newImageFile!);
+        print(imageUrl);
+      }
+
       final updatedTile = widget.tile.copyWith(
         code: _codeController.text,
         size: _sizeController.text,
-        companyName: _companyNameController.text,
+        companyName: _selectedCompany ?? widget.tile.companyName,
         tone: _toneController.text,
         stock: int.parse(_stockController.text),
         date: _selectedDate,
-        imagePath: _imagePath,
+        imageUrl: imageUrl,
       );
 
       context.read<TileCubit>().updateTile(updatedTile).then((_) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Tile updated successfully')),
         );
+        Navigator.pop(context);
         Navigator.pop(context);
       });
     }
@@ -135,34 +165,7 @@ class _EditTileScreenState extends State<EditTileScreen> {
                         color: Colors.grey[300],
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child:
-                          _imagePath != null
-                              ? ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.file(
-                                  File(_imagePath!),
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: const [
-                                        Icon(Icons.broken_image, size: 50),
-                                        SizedBox(height: 10),
-                                        Text('Image not found'),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              )
-                              : Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Icon(Icons.add_photo_alternate, size: 50),
-                                  SizedBox(height: 10),
-                                  Text('Add Image'),
-                                ],
-                              ),
+                      child: _displayImage(),
                     ),
                   ),
                 ),
@@ -180,16 +183,12 @@ class _EditTileScreenState extends State<EditTileScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AppTextField2(
-                  labelText: 'Company Name',
-                  helpText: 'Enter company name',
-                  isFloatLabel: false,
-                  controller: _companyNameController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter company name';
-                    }
-                    return null;
+                DropdownField(
+                  value: _selectedCompany,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedCompany = value;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
@@ -258,24 +257,29 @@ class _EditTileScreenState extends State<EditTileScreen> {
                 SizedBox(
                   width: double.infinity,
                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: _updateTile,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Theme.of(context).primaryColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: BlocBuilder<TileCubit, TileState>(
-                      builder: (context, state) {
-                        return state.status == TileStatus.loading
-                            ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                            : const Text('Update Tile');
-                      },
-                    ),
+                  child: BlocBuilder<TileCubit, TileState>(
+                    builder: (context, state) {
+                      final isLoading = state.status == TileStatus.loading;
+                      return Skeletonizer(
+                        enabled: isLoading,
+                        // Optional configuration for skeletonizer effect
+                        effect: ShimmerEffect(
+                          baseColor: Colors.grey[300]!,
+                          highlightColor: Colors.grey[100]!,
+                        ),
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _updateTile,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Theme.of(context).primaryColor,
+                            foregroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(isLoading ? 'Saving...' : 'Save Tile'),
+                        ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -283,6 +287,52 @@ class _EditTileScreenState extends State<EditTileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _displayImage() {
+    if (_newImageFile != null) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.file(
+          _newImageFile!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _displayErrorImage();
+          },
+        ),
+      );
+    } else if (_imageUrl != null && _imageUrl!.isNotEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          _imageUrl!,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _displayErrorImage();
+          },
+        ),
+      );
+    } else {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: const [
+          Icon(Icons.add_photo_alternate, size: 50),
+          SizedBox(height: 10),
+          Text('Add Image'),
+        ],
+      );
+    }
+  }
+
+  Widget _displayErrorImage() {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: const [
+        Icon(Icons.broken_image, size: 50),
+        SizedBox(height: 10),
+        Text('Image not found'),
+      ],
     );
   }
 }

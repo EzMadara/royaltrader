@@ -128,4 +128,6 @@ class TileCubit extends Cubit<TileState> {
       );
     }
   }
+
+  void stopLoading() {}
 }

@@ -1,14 +1,51 @@
 // 🔹 File: lib/ui/HomeScreen.dart
+import 'dart:typed_data';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+import 'package:royaltrader/config/routes/routes_name.dart';
 import 'package:royaltrader/cubit/tile_cubit.dart';
 import 'package:royaltrader/cubit/tile_state.dart'
     show TileError, TileLoaded, TileLoading, TileState, TileStatus;
+import 'package:royaltrader/models/tile_model.dart';
+import 'package:royaltrader/ui/TileDetailsScreen.dart';
+import 'package:royaltrader/widgets/dumb_widgets/SearchFilterWidget.dart';
 import 'package:royaltrader/widgets/dumb_widgets/app_text_field_widget.dart';
 import 'package:royaltrader/const/resource.dart';
+import 'package:http/http.dart' as http;
+import 'package:skeletonizer/skeletonizer.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    context.read<TileCubit>().loadTiles();
+
+    _searchController.addListener(() {
+      context.read<TileCubit>().filterByCompany(_searchController.text);
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -23,31 +60,96 @@ class HomeScreen extends StatelessWidget {
           ),
           drawer: _buildDrawer(context),
           floatingActionButton: FloatingActionButton(
+            backgroundColor: Theme.of(context).primaryColor,
             onPressed: () {
-              Navigator.pushNamed(context, 'add_tile');
+              Navigator.pushNamed(context, RoutesName.addTile);
             },
-            child: const Icon(Icons.add),
+            child: const Icon(Icons.add, color: Colors.white),
           ),
           body: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Column(
               children: [
-                const SizedBox(height: 12),
-                AppTextField(
-                  labelText: 'Search by Company',
-                  helpText: 'Search',
-                  isFloatLabel: false,
-                  onChanged: (value) {
-                    // Implement filtering if needed
-                  },
-                  Function: (value) {},
-                ),
+                SearchFilterWidget(searchController: _searchController),
                 const SizedBox(height: 12),
                 Expanded(
                   child: BlocBuilder<TileCubit, TileState>(
                     builder: (context, state) {
                       if (state.status == TileStatus.loading) {
-                        return const Center(child: CircularProgressIndicator());
+                        return Skeletonizer(
+                          enabled: true,
+                          effect: ShimmerEffect(
+                            baseColor: Colors.grey.shade300,
+                            highlightColor: Colors.grey.shade100,
+                            duration: const Duration(seconds: 2),
+                          ),
+                          child: ListView.builder(
+                            itemCount: 6, // Show 6 fake items
+                            itemBuilder: (context, index) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                child: Card(
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(4),
+                                  ),
+                                  clipBehavior: Clip.antiAliasWithSaveLayer,
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(15),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        Container(
+                                          height: 100,
+                                          width: 100,
+                                          color: Colors.grey[300],
+                                        ),
+                                        const SizedBox(width: 20),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: <Widget>[
+                                              Container(height: 5),
+                                              Container(
+                                                height: 20,
+                                                width: 150,
+                                                color: Colors.grey[300],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Container(
+                                                height: 18,
+                                                width: 200,
+                                                color: Colors.grey[300],
+                                              ),
+                                              const SizedBox(height: 5),
+                                              Container(
+                                                height: 16,
+                                                width: 100,
+                                                color: Colors.grey[300],
+                                              ),
+                                              const SizedBox(height: 10),
+                                              Align(
+                                                alignment:
+                                                    Alignment.centerRight,
+                                                child: Icon(
+                                                  Icons.delete,
+                                                  color: Colors.grey[300],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        );
                       } else if (state.status == TileStatus.loaded) {
                         if (state.tiles.isEmpty) {
                           return const Center(
@@ -55,89 +157,10 @@ class HomeScreen extends StatelessWidget {
                           );
                         }
                         return ListView.builder(
-                          itemCount: state.tiles.length,
+                          itemCount: state.filteredTiles.length,
                           itemBuilder: (context, index) {
-                            final tile = state.tiles[index];
-                            return Card(
-                              // Define the shape of the card
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              // Define how the card's content should be clipped
-                              clipBehavior: Clip.antiAliasWithSaveLayer,
-                              // Define the child widget of the card
-                              child: Padding(
-                                padding: const EdgeInsets.all(15),
-                                child: Row(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: <Widget>[
-                                    // Add an image widget to display an image
-                                    Image.network(
-                                      tile.imageUrl ?? '',
-                                      height: 100,
-                                      width: 100,
-                                      fit: BoxFit.cover,
-                                    ),
-                                    // Add some spacing between the image and the text
-                                    Container(width: 20),
-                                    // Add an expanded widget to take up the remaining horizontal space
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: <Widget>[
-                                          // Add some spacing between the top of the card and the title
-                                          Container(height: 5),
-                                          // Add a title widget (company name)
-                                          Text(
-                                            tile.companyName,
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.titleMedium!.copyWith(
-                                              color: Colors.grey[800],
-                                            ),
-                                          ),
-                                          // Add some spacing between the title and the subtitle
-                                          Container(height: 5),
-                                          // Add a subtitle widget (tile code and size)
-                                          Text(
-                                            'Code: ${tile.code} - Size: ${tile.size}',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodyMedium!.copyWith(
-                                              color: Colors.grey[500],
-                                            ),
-                                          ),
-                                          // Add some spacing between the subtitle and the tone
-                                          Container(height: 5),
-                                          // Add tone info
-                                          Text(
-                                            'Tone: ${tile.tone}',
-                                            style: Theme.of(
-                                              context,
-                                            ).textTheme.bodySmall!.copyWith(
-                                              color: Colors.grey[700],
-                                            ),
-                                          ),
-                                          // Add a delete button to remove the tile
-                                          Container(height: 10),
-                                          Align(
-                                            alignment: Alignment.centerRight,
-                                            child: IconButton(
-                                              icon: const Icon(Icons.delete),
-                                              onPressed:
-                                                  () => context
-                                                      .read<TileCubit>()
-                                                      .deleteTile(tile.id),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            );
+                            final tile = state.filteredTiles[index];
+                            return _buildTileCard(context, tile);
                           },
                         );
                       } else if (state.status == TileStatus.error) {
@@ -158,9 +181,296 @@ class HomeScreen extends StatelessWidget {
   }
 }
 
-void _generatePDF() {
-  print("Generating PDF...");
-  // Implement PDF generation
+Widget _buildTileCard(BuildContext context, Tile tile) {
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => TileDetailsScreen(tile: tile)),
+      );
+    },
+    child: Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+      clipBehavior: Clip.antiAliasWithSaveLayer,
+      child: Padding(
+        padding: const EdgeInsets.all(15),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            CachedNetworkImage(
+              imageUrl: tile.imageUrl ?? '',
+              height: 100,
+              width: 100,
+              fit: BoxFit.cover,
+              placeholder:
+                  (context, url) => Skeletonizer(
+                    enabled: true,
+                    effect: ShimmerEffect(
+                      baseColor: Colors.grey.shade300,
+                      highlightColor: Colors.grey.shade100,
+                      duration: const Duration(seconds: 2),
+                    ),
+                    child: Container(
+                      height: 100,
+                      width: 100,
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+              errorWidget:
+                  (context, url, error) => Container(
+                    height: 100,
+                    width: 100,
+                    color: Colors.grey.shade200,
+                    child: const Icon(Icons.broken_image, color: Colors.red),
+                  ),
+            ),
+
+            Container(width: 20),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Container(height: 5),
+                  Text(
+                    tile.companyName,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleMedium!.copyWith(color: Colors.grey[800]),
+                  ),
+                  Container(height: 5),
+                  Text(
+                    'Code: ${tile.code} - Size: ${tile.size}',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium!.copyWith(color: Colors.grey[500]),
+                  ),
+                  Container(height: 5),
+                  Text(
+                    'Tone: ${tile.tone}',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall!.copyWith(color: Colors.grey[700]),
+                  ),
+                  Container(height: 10),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () => _showDeleteConfirmation(context, tile),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+void _showDeleteConfirmation(BuildContext context, Tile tile) {
+  showDialog(
+    context: context,
+    builder:
+        (ctx) => AlertDialog(
+          title: const Text('Delete Tile'),
+          content: Text('Are you sure you want to delete ${tile.code}?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                context.read<TileCubit>().deleteTile(tile.id);
+                Navigator.of(ctx).pop();
+              },
+              style: TextButton.styleFrom(foregroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+  );
+}
+
+void _showPdfOptions(BuildContext context) {
+  showDialog(
+    context: context,
+    builder:
+        (ctx) => AlertDialog(
+          title: const Text('Generate PDF Report'),
+          content: const Text('Choose the type of report to generate'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _generatePdf(context, allTiles: true);
+              },
+              child: const Text('All Tiles'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(ctx).pop();
+                _generatePdf(context, allTiles: false);
+              },
+              child: const Text('Filtered Tiles'),
+            ),
+          ],
+        ),
+  );
+}
+
+Future<void> _generatePdf(
+  BuildContext context, {
+  required bool allTiles,
+}) async {
+  final state = context.read<TileCubit>().state;
+  final tiles = allTiles ? state.tiles : state.filteredTiles;
+
+  final pdf = pw.Document();
+  final companyFilter =
+      state.filterCompany.isEmpty
+          ? 'All Companies'
+          : 'Company: ${state.filterCompany}';
+
+  final ByteData logoData = await rootBundle.load('assets/logo.jpg');
+  final Uint8List logoBytes = logoData.buffer.asUint8List();
+  final logoImage = pw.MemoryImage(logoBytes);
+
+  final Map<String, pw.MemoryImage> tileImages = {};
+
+  for (final tile in tiles) {
+    try {
+      if (tile.imageUrl != null && tile.imageUrl!.isNotEmpty) {
+        final ref = FirebaseStorage.instance.ref().child(tile.imageUrl!);
+        final url = await ref.getDownloadURL();
+        final response = await http.get(Uri.parse(url));
+        tileImages[tile.code] = pw.MemoryImage(response.bodyBytes);
+      }
+    } catch (e) {
+      print('Failed to load image for tile: ${tile.code}, error: $e');
+    }
+  }
+
+  pdf.addPage(
+    pw.MultiPage(
+      header:
+          (context) => pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Row(
+                mainAxisAlignment: pw.MainAxisAlignment.center,
+                children: [
+                  pw.Image(logoImage, width: 50, height: 50),
+                  pw.SizedBox(width: 10),
+                  pw.Text(
+                    'Royal Tiles And Sanitary',
+                    style: pw.TextStyle(
+                      fontSize: 18,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'Inventory Report - $companyFilter',
+                style: const pw.TextStyle(fontSize: 14),
+              ),
+              pw.SizedBox(height: 5),
+              pw.Text(
+                'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                style: const pw.TextStyle(fontSize: 12),
+              ),
+              pw.Divider(),
+            ],
+          ),
+      build:
+          (context) => [
+            pw.Table(
+              border: pw.TableBorder.all(),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1), // Code
+                1: const pw.FlexColumnWidth(1.5), // Company
+                2: const pw.FlexColumnWidth(1), // Size
+                3: const pw.FlexColumnWidth(1), // Tone
+                4: const pw.FlexColumnWidth(0.8), // Stock
+                5: const pw.FlexColumnWidth(1), // Date
+                6: const pw.FlexColumnWidth(1.5), // Image
+              },
+
+              tableWidth: pw.TableWidth.max,
+              children: [
+                // Table header
+                pw.TableRow(
+                  decoration: const pw.BoxDecoration(color: PdfColors.grey300),
+                  children: [
+                    _buildTableCell('Code', isHeader: true),
+                    _buildTableCell('Company', isHeader: true),
+                    _buildTableCell('Size', isHeader: true),
+                    _buildTableCell('Tone', isHeader: true),
+                    _buildTableCell('Stock', isHeader: true),
+                    _buildTableCell('Date', isHeader: true),
+                    _buildTableCell('Image', isHeader: true),
+                  ],
+                ),
+                // Table data
+                ...tiles.map(
+                  (tile) => pw.TableRow(
+                    children: [
+                      _buildTableCell(tile.code),
+                      _buildTableCell(tile.companyName),
+                      _buildTableCell(tile.size),
+                      _buildTableCell(tile.tone),
+                      _buildTableCell(tile.stock.toString()),
+                      _buildTableCell(
+                        DateFormat('dd/MM/yyyy').format(tile.date),
+                      ),
+                      pw.Padding(
+                        padding: const pw.EdgeInsets.all(4),
+                        child:
+                            tileImages.containsKey(tile.code)
+                                ? pw.Image(tileImages[tile.code]!, height: 40)
+                                : pw.Container(
+                                  height: 40,
+                                  alignment: pw.Alignment.center,
+                                  child: pw.Text('No Image'),
+                                ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            pw.SizedBox(height: 20),
+            pw.Text(
+              'Total Items: ${tiles.length}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            pw.Text(
+              'Total Stock: ${tiles.fold<int>(0, (sum, tile) => sum + tile.stock)}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+          ],
+    ),
+  );
+
+  await Printing.layoutPdf(
+    onLayout: (format) => pdf.save(),
+    name:
+        'tiles_inventory_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
+  );
+}
+
+pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
+  return pw.Padding(
+    padding: const pw.EdgeInsets.all(5),
+    child: pw.Text(
+      text,
+      style: isHeader ? pw.TextStyle(fontWeight: pw.FontWeight.bold) : null,
+    ),
+  );
 }
 
 void _logout(BuildContext context) {
@@ -194,7 +504,7 @@ Widget _buildDrawer(BuildContext context) {
           ),
           onTap: () {
             Navigator.pop(context);
-            _generatePDF();
+            _showPdfOptions(context);
           },
         ),
         ListTile(

@@ -7,13 +7,14 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:royaltrader/config/routes/routes.dart';
 import 'package:royaltrader/config/routes/routes_name.dart';
 import 'package:royaltrader/cubit/tile_cubit.dart';
+import 'package:royaltrader/firebase_options.dart';
 import 'package:royaltrader/repositories/tile_repository.dart';
 import 'package:royaltrader/theme/colors.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final tileRepository = TileRepository();
   runApp(
     MultiBlocProvider(

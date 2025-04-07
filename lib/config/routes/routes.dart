@@ -25,8 +25,8 @@ class Routes {
         );
 
       // Tile inventory routes
-      case RoutesName.tilesList:
-        return MaterialPageRoute(builder: (context) => const TilesListScreen());
+      // case RoutesName.tilesList:
+      //   return MaterialPageRoute(builder: (context) => const TilesListScreen());
       case RoutesName.addTile:
         return MaterialPageRoute(builder: (context) => const AddTileScreen());
       case RoutesName.editTile:

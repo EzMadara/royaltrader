@@ -1,21 +1,20 @@
-// lib/repository/tile_repository.dart
-import 'dart:io';
-
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:uuid/uuid.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/tile_model.dart';
 
 class TileRepository {
-  static const String _tilesKey = 'tiles_data';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final Uuid _uuid = const Uuid();
 
-  // Get all tiles from local storage
+  static const String _tilesCollection = 'tiles';
+
+  // Get all tiles from Firestore
   Future<List<Tile>> getAllTiles() async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final tilesJsonList = prefs.getStringList(_tilesKey) ?? [];
-
-      return tilesJsonList.map((tileJson) => Tile.fromJson(tileJson)).toList();
+      final snapshot = await _firestore.collection(_tilesCollection).get();
+      return snapshot.docs
+          .map((doc) => Tile.fromMap(doc.data() as Map<String, dynamic>))
+          .toList();
     } catch (e) {
       print('Error getting tiles: $e');
       return [];
@@ -37,11 +36,14 @@ class TileRepository {
   // Add a new tile
   Future<bool> addTile(Tile tile) async {
     try {
-      final tiles = await getAllTiles();
       final tileWithId = tile.copyWith(id: _uuid.v4());
 
-      tiles.add(tileWithId);
-      return await _saveTiles(tiles);
+      // Add the tile to Firestore
+      await _firestore
+          .collection(_tilesCollection)
+          .doc(tileWithId.id)
+          .set(tileWithId.toMap());
+      return true;
     } catch (e) {
       print('Error adding tile: $e');
       return false;
@@ -51,14 +53,12 @@ class TileRepository {
   // Update an existing tile
   Future<bool> updateTile(Tile updatedTile) async {
     try {
-      final tiles = await getAllTiles();
-      final index = tiles.indexWhere((tile) => tile.id == updatedTile.id);
-
-      if (index >= 0) {
-        tiles[index] = updatedTile;
-        return await _saveTiles(tiles);
-      }
-      return false;
+      // Update the tile in Firestore
+      await _firestore
+          .collection(_tilesCollection)
+          .doc(updatedTile.id)
+          .update(updatedTile.toMap());
+      return true;
     } catch (e) {
       print('Error updating tile: $e');
       return false;
@@ -68,23 +68,11 @@ class TileRepository {
   // Delete a tile
   Future<bool> deleteTile(String id) async {
     try {
-      final tiles = await getAllTiles();
-      tiles.removeWhere((tile) => tile.id == id);
-      return await _saveTiles(tiles);
+      // Delete the tile from Firestore
+      await _firestore.collection(_tilesCollection).doc(id).delete();
+      return true;
     } catch (e) {
       print('Error deleting tile: $e');
-      return false;
-    }
-  }
-
-  // Save tiles to SharedPreferences
-  Future<bool> _saveTiles(List<Tile> tiles) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final tilesJsonList = tiles.map((tile) => tile.toJson()).toList();
-      return await prefs.setStringList(_tilesKey, tilesJsonList);
-    } catch (e) {
-      print('Error saving tiles: $e');
       return false;
     }
   }
