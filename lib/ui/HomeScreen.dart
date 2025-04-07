@@ -1,4 +1,5 @@
 // 🔹 File: lib/ui/HomeScreen.dart
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart';
@@ -32,19 +33,26 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final TextEditingController _searchController = TextEditingController();
+  Timer? _debounce;
 
   @override
   void initState() {
     super.initState();
     context.read<TileCubit>().loadTiles();
     _searchController.addListener(() {
-      context.read<TileCubit>().searchTilesByCompany(_searchController.text);
+      if (_searchController.text !=
+          context.read<TileCubit>().state.filterCompany) {
+        context.read<TileCubit>().searchTilesByCompany(_searchController.text);
+      }
     });
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+
     _searchController.dispose();
+
     super.dispose();
   }
 

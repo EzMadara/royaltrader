@@ -61,23 +61,19 @@ class TileCubit extends Cubit<TileState> {
   // }
 
   Future<void> searchTilesByCompany(String companyName) async {
-    try {
-      emit(state.copyWith(status: TileStatus.loading));
-      final tiles = await _repository.getUserTilesByCompany(companyName);
+    if (companyName.isEmpty) {
       emit(
-        state.copyWith(
-          tiles: tiles,
-          filteredTiles: tiles,
-          status: TileStatus.loaded,
-        ),
+        state.copyWith(filteredTiles: state.tiles, status: TileStatus.loaded),
       );
-    } catch (e) {
-      emit(
-        state.copyWith(
-          status: TileStatus.error,
-          errorMessage: 'Failed to load tiles: $e',
-        ),
-      );
+    } else {
+      final filtered =
+          state.tiles.where((tile) {
+            return tile.companyName.toLowerCase().contains(
+              companyName.toLowerCase(),
+            );
+          }).toList();
+
+      emit(state.copyWith(filteredTiles: filtered, status: TileStatus.loaded));
     }
   }
 
