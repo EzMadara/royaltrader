@@ -105,10 +105,9 @@ class TileDetailsScreen extends StatelessWidget {
                       _buildDetailRow('Tone', tile.tone),
                       _buildDetailRow('Stock', tile.stock.toString()),
                       _buildDetailRow(
-                        'Date Added',
+                        'Date',
                         DateFormat('dd MMMM, yyyy').format(tile.date),
                       ),
-                      _buildDetailRow('ID', tile.id),
                     ],
                   ),
                 ),
