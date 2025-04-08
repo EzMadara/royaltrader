@@ -94,7 +94,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             duration: const Duration(seconds: 2),
                           ),
                           child: ListView.builder(
-                            itemCount: 6, // Show 6 fake items
+                            itemCount: 6,
                             itemBuilder: (context, index) {
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
@@ -414,10 +414,6 @@ Future<void> _generatePdf(
   );
 
   final pdf = pw.Document();
-  final companyFilter =
-      state.filterCompany.isEmpty
-          ? 'All Companies'
-          : 'Company: ${state.filterCompany}';
 
   final ByteData logoData = await rootBundle.load('assets/logo.jpg');
   final Uint8List logoBytes = logoData.buffer.asUint8List();
@@ -442,54 +438,54 @@ Future<void> _generatePdf(
   for (final tile in tiles) {
     pdf.addPage(
       pw.Page(
+        margin: const pw.EdgeInsets.all(40),
         build:
             (context) => pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.center,
               children: [
-                // Header
+                // Header with logo at top right
                 pw.Row(
-                  mainAxisAlignment: pw.MainAxisAlignment.center,
+                  mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
                   children: [
-                    pw.Image(logoImage, width: 50, height: 50),
-                    pw.SizedBox(width: 10),
-                    pw.Text(
-                      'Royal Tiles And Sanitary',
-                      style: pw.TextStyle(
-                        fontSize: 18,
-                        fontWeight: pw.FontWeight.bold,
-                      ),
+                    // Company name and subtitle
+                    pw.Column(
+                      crossAxisAlignment: pw.CrossAxisAlignment.start,
+                      children: [
+                        pw.Text(
+                          tile.companyName.toUpperCase(),
+                          style: pw.TextStyle(
+                            fontSize: 24,
+                            fontWeight: pw.FontWeight.bold,
+                            color: PdfColors.black,
+                          ),
+                        ),
+                        pw.SizedBox(height: 5),
+                      ],
+                    ),
+
+                    pw.Container(
+                      height: 60,
+                      width: 60,
+                      child: pw.Image(logoImage, fit: pw.BoxFit.contain),
                     ),
                   ],
                 ),
-                pw.SizedBox(height: 5),
-                pw.Text(
-                  'Tile Detail - $companyFilter',
-                  style: const pw.TextStyle(fontSize: 14),
-                ),
-                pw.SizedBox(height: 5),
-                pw.Text(
-                  'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-                  style: const pw.TextStyle(fontSize: 12),
-                ),
-                pw.Divider(),
-                pw.SizedBox(height: 20),
-
-                // Large Image
+                pw.SizedBox(height: 30),
                 tileImages.containsKey(tile.code)
                     ? pw.Container(
-                      height: 300,
-                      width: 400,
+                      height: 380,
+                      width: 700,
                       alignment: pw.Alignment.center,
                       child: pw.Image(
                         tileImages[tile.code]!,
-                        fit: pw.BoxFit.contain,
+                        fit: pw.BoxFit.fill,
                       ),
                     )
                     : pw.Container(
-                      height: 300,
-                      width: 400,
+                      height: 380,
+                      width: 500,
                       alignment: pw.Alignment.center,
-                      decoration: pw.BoxDecoration(border: pw.Border.all()),
                       child: pw.Text(
                         'No Image Available',
                         style: pw.TextStyle(fontSize: 16),
@@ -497,15 +493,9 @@ Future<void> _generatePdf(
                     ),
                 pw.SizedBox(height: 30),
 
-                // Tile Details in a styled container
                 pw.Container(
-                  padding: const pw.EdgeInsets.all(15),
-                  decoration: pw.BoxDecoration(
-                    border: pw.Border.all(width: 1),
-                    borderRadius: const pw.BorderRadius.all(
-                      pw.Radius.circular(10),
-                    ),
-                  ),
+                  width: 500,
+                  padding: const pw.EdgeInsets.symmetric(vertical: 10),
                   child: pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
@@ -514,12 +504,56 @@ Future<void> _generatePdf(
                       _buildDetailRow('Size', tile.size),
                       _buildDetailRow('Tone', tile.tone),
                       _buildDetailRow('Stock', tile.stock.toString()),
-                      _buildDetailRow(
-                        'Date',
-                        DateFormat('dd/MM/yyyy').format(tile.date),
+                    ],
+                  ),
+                ),
+
+                pw.SizedBox(height: 10),
+
+                pw.Text(
+                  '${tile.companyName} ${tile.code} ${tile.tone}',
+                  style: pw.TextStyle(fontSize: 14),
+                ),
+                pw.SizedBox(height: 70),
+
+                pw.Container(
+                  alignment: pw.Alignment.bottomCenter,
+                  child: pw.Row(
+                    mainAxisAlignment: pw.MainAxisAlignment.center,
+                    children: [
+                      pw.Image(logoImage, width: 20, height: 20),
+                      pw.SizedBox(width: 5),
+                      pw.Text(
+                        'Royal Tiles And Sanitary',
+                        style: pw.TextStyle(
+                          fontSize: 10,
+                          color: PdfColors.grey700,
+                        ),
                       ),
                     ],
                   ),
+                ),
+                pw.Row(
+                  mainAxisAlignment: pw.MainAxisAlignment.end,
+                  children: [
+                    pw.Container(
+                      width: 30,
+                      height: 30,
+                      decoration: pw.BoxDecoration(
+                        color: PdfColors.amber700,
+                        borderRadius: pw.BorderRadius.circular(2),
+                      ),
+                      alignment: pw.Alignment.center,
+                      child: pw.Text(
+                        '${tiles.indexOf(tile) + 1}',
+                        style: pw.TextStyle(
+                          color: PdfColors.white,
+                          fontSize: 14,
+                          fontWeight: pw.FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -527,95 +561,31 @@ Future<void> _generatePdf(
     );
   }
 
-  pdf.addPage(
-    pw.Page(
-      build:
-          (context) => pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Center(
-                child: pw.Column(
-                  children: [
-                    pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.center,
-                      children: [
-                        pw.Image(logoImage, width: 50, height: 50),
-                        pw.SizedBox(width: 10),
-                        pw.Text(
-                          'Royal Tiles And Sanitary',
-                          style: pw.TextStyle(
-                            fontSize: 18,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    pw.SizedBox(height: 5),
-                    pw.Text(
-                      'Inventory Summary - $companyFilter',
-                      style: const pw.TextStyle(fontSize: 14),
-                    ),
-                    pw.SizedBox(height: 5),
-                    pw.Text(
-                      'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
-                      style: const pw.TextStyle(fontSize: 12),
-                    ),
-                  ],
-                ),
-              ),
-              pw.Divider(),
-              pw.SizedBox(height: 20),
-
-              pw.Text(
-                'Summary Information:',
-                style: pw.TextStyle(
-                  fontSize: 16,
-                  fontWeight: pw.FontWeight.bold,
-                ),
-              ),
-              pw.SizedBox(height: 10),
-              pw.Text('Total Items: ${tiles.length}'),
-              pw.Text(
-                'Total Stock: ${tiles.fold<int>(0, (sum, tile) => sum + tile.stock)}',
-              ),
-            ],
-          ),
-    ),
-  );
-
   await Printing.layoutPdf(
     onLayout: (format) => pdf.save(),
-    name:
-        'tiles_inventory_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
+    name: 'tiles_catalog_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
   );
 }
 
 pw.Widget _buildDetailRow(String label, String value) {
   return pw.Padding(
-    padding: const pw.EdgeInsets.symmetric(vertical: 5),
+    padding: const pw.EdgeInsets.symmetric(vertical: 3),
     child: pw.Row(
       children: [
         pw.Container(
-          width: 100,
+          width: 70,
           child: pw.Text(
             '$label:',
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 14),
+            style: pw.TextStyle(fontSize: 12, color: PdfColors.grey800),
           ),
         ),
         pw.Expanded(
-          child: pw.Text(value, style: const pw.TextStyle(fontSize: 14)),
+          child: pw.Text(
+            value,
+            style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
+          ),
         ),
       ],
-    ),
-  );
-}
-
-pw.Widget _buildTableCell(String text, {bool isHeader = false}) {
-  return pw.Padding(
-    padding: const pw.EdgeInsets.all(6),
-    child: pw.Text(
-      text,
-      style: pw.TextStyle(fontWeight: isHeader ? pw.FontWeight.bold : null),
     ),
   );
 }

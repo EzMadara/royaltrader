@@ -6,7 +6,6 @@ import 'package:royaltrader/ui/HomeScreen.dart';
 import 'package:royaltrader/ui/LoginScreen.dart';
 import 'package:royaltrader/ui/RegisterScreen.dart';
 import 'package:royaltrader/ui/SplashScreen.dart';
-import 'package:royaltrader/ui/TilesListScreen.dart';
 import 'package:royaltrader/ui/AddTileScreen.dart';
 import 'package:royaltrader/ui/EditTileScreen.dart';
 import 'package:royaltrader/ui/TileDetailsScreen.dart';
@@ -27,9 +26,6 @@ class Routes {
           builder: (context) => const ForgotMyPassword(),
         );
 
-      // Tile inventory routes
-      // case RoutesName.tilesList:
-      //   return MaterialPageRoute(builder: (context) => const TilesListScreen());
       case RoutesName.addTile:
         return MaterialPageRoute(builder: (context) => const AddTileScreen());
       case RoutesName.editTile:
