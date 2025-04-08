@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:royaltrader/const/resource.dart';
 
@@ -13,17 +14,19 @@ class HomeDrawer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    User? user = FirebaseAuth.instance.currentUser;
+
     return Drawer(
       child: Column(
         children: [
           UserAccountsDrawerHeader(
             decoration: BoxDecoration(color: Theme.of(context).primaryColor),
             accountName: Text(
-              "Ali Abbas",
+              user?.displayName ?? "",
               style: Theme.of(context).textTheme.titleMedium,
             ),
             accountEmail: Text(
-              "aliabbas@gmail.com",
+              user?.email ?? "",
               style: Theme.of(context).textTheme.titleSmall,
             ),
             currentAccountPicture: CircleAvatar(

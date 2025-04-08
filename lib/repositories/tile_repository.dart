@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import '../models/tile_model.dart';
 
@@ -158,6 +159,16 @@ class TileRepository {
         return false; // Not authorized to delete this tile
       }
 
+      if (existingTile.imageUrl != null && existingTile.imageUrl!.isNotEmpty) {
+        try {
+          await FirebaseStorage.instance
+              .refFromURL(existingTile.imageUrl!)
+              .delete();
+        } catch (e) {
+          print('Error deleting image from Firebase Storage: $e');
+          // Handle the error gracefully if necessary
+        }
+      }
       // Delete the tile from Firestore
       await _firestore.collection(_tilesCollection).doc(id).delete();
 

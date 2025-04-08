@@ -29,29 +29,51 @@ class TileCard extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         color: Colors.white,
         shadowColor: Colors.black38,
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              _buildTileImage(),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    _buildTileTitle(),
-                    const SizedBox(height: 6),
-                    _buildTileInfo(),
-                    const SizedBox(height: 6),
-                    _buildToneBadge(),
-                    const SizedBox(height: 8),
-                    _buildDeleteButton(context),
-                  ],
+        child: Stack(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  _buildTileImage(),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        _buildTileTitle(),
+                        const SizedBox(height: 6),
+                        _buildTileInfo(),
+                        const SizedBox(height: 6),
+                        _buildToneBadge(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Positioned delete button
+            Positioned(
+              top: 10,
+              right: 10,
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () => _showDeleteConfirmation(context),
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.delete_outline,
+                      color: Colors.red[400],
+                      size: 20,
+                    ),
+                  ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -159,23 +181,6 @@ class TileCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDeleteButton(BuildContext context) {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: () => _showDeleteConfirmation(context),
-          child: Container(
-            padding: const EdgeInsets.all(8),
-            child: Icon(Icons.delete_outline, color: Colors.red[400], size: 20),
-          ),
-        ),
       ),
     );
   }

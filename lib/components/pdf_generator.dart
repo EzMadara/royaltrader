@@ -11,6 +11,7 @@ import 'package:royaltrader/models/tile_model.dart';
 import 'package:http/http.dart' as http;
 
 class PdfGenerator {
+  /// Generate PDF for all or filtered tiles
   Future<void> generatePdf(
     BuildContext context, {
     required bool allTiles,
@@ -18,155 +19,25 @@ class PdfGenerator {
     final state = context.read<TileCubit>().state;
     final tiles = allTiles ? state.tiles : state.filteredTiles;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Generating PDF...."),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Generating PDF...")));
 
     final pdf = pw.Document();
-    final ByteData logoData = await rootBundle.load('assets/logo.jpg');
-    final Uint8List logoBytes = logoData.buffer.asUint8List();
-    final logoImage = pw.MemoryImage(logoBytes);
+    final logoImage = await _loadLogo();
+    final tileImages = await _loadTileImages(tiles);
 
-    final Map<String, pw.MemoryImage> tileImages = {};
-
-    // Load all tile images
-    for (final tile in tiles) {
-      try {
-        if (tile.imageUrl != null && tile.imageUrl!.isNotEmpty) {
-          final url = tile.imageUrl;
-          final response = await http.get(Uri.parse(url!));
-          tileImages[tile.code] = pw.MemoryImage(response.bodyBytes);
-        }
-      } catch (e) {
-        print('Failed to load image for tile: ${tile.code}, error: $e');
-      }
-    }
-
-    // Create a page for each tile
     for (final tile in tiles) {
       pdf.addPage(
         pw.Page(
-          margin: const pw.EdgeInsets.all(40),
+          orientation: pw.PageOrientation.portrait,
+          margin: const pw.EdgeInsets.all(0),
           build:
-              (context) => pw.Column(
-                crossAxisAlignment: pw.CrossAxisAlignment.center,
-                children: [
-                  // Header with logo at top right
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      // Company name and subtitle
-                      pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: [
-                          pw.Text(
-                            tile.companyName.toUpperCase(),
-                            style: pw.TextStyle(
-                              fontSize: 24,
-                              fontWeight: pw.FontWeight.bold,
-                              color: PdfColors.black,
-                            ),
-                          ),
-                          pw.SizedBox(height: 5),
-                        ],
-                      ),
-
-                      pw.Container(
-                        height: 60,
-                        width: 60,
-                        child: pw.Image(logoImage, fit: pw.BoxFit.contain),
-                      ),
-                    ],
-                  ),
-                  pw.SizedBox(height: 30),
-                  tileImages.containsKey(tile.code)
-                      ? pw.Container(
-                        height: 380,
-                        width: 700,
-                        alignment: pw.Alignment.center,
-                        child: pw.Image(
-                          tileImages[tile.code]!,
-                          fit: pw.BoxFit.fill,
-                        ),
-                      )
-                      : pw.Container(
-                        height: 380,
-                        width: 500,
-                        alignment: pw.Alignment.center,
-                        child: pw.Text(
-                          'No Image Available',
-                          style: pw.TextStyle(fontSize: 16),
-                        ),
-                      ),
-                  pw.SizedBox(height: 30),
-
-                  pw.Container(
-                    width: 500,
-                    padding: const pw.EdgeInsets.symmetric(vertical: 10),
-                    child: pw.Column(
-                      crossAxisAlignment: pw.CrossAxisAlignment.start,
-                      children: [
-                        _buildDetailRow('Code', tile.code),
-                        _buildDetailRow('Company', tile.companyName),
-                        _buildDetailRow('Size', tile.size),
-                        _buildDetailRow('Tone', tile.tone),
-                        _buildDetailRow('Stock', tile.stock.toString()),
-                      ],
-                    ),
-                  ),
-
-                  pw.SizedBox(height: 10),
-
-                  pw.Text(
-                    '${tile.companyName} ${tile.code} ${tile.tone}',
-                    style: pw.TextStyle(fontSize: 14),
-                  ),
-                  pw.SizedBox(height: 70),
-
-                  pw.Container(
-                    alignment: pw.Alignment.bottomCenter,
-                    child: pw.Row(
-                      mainAxisAlignment: pw.MainAxisAlignment.center,
-                      children: [
-                        pw.Image(logoImage, width: 20, height: 20),
-                        pw.SizedBox(width: 5),
-                        pw.Text(
-                          'Royal Tiles And Sanitary',
-                          style: pw.TextStyle(
-                            fontSize: 10,
-                            color: PdfColors.grey700,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  pw.Row(
-                    mainAxisAlignment: pw.MainAxisAlignment.end,
-                    children: [
-                      pw.Container(
-                        width: 30,
-                        height: 30,
-                        decoration: pw.BoxDecoration(
-                          color: PdfColors.amber700,
-                          borderRadius: pw.BorderRadius.circular(2),
-                        ),
-                        alignment: pw.Alignment.center,
-                        child: pw.Text(
-                          '${tiles.indexOf(tile) + 1}',
-                          style: pw.TextStyle(
-                            color: PdfColors.white,
-                            fontSize: 14,
-                            fontWeight: pw.FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+              (context) => _buildTilePage(
+                tile,
+                logoImage,
+                tileImages[tile.code],
+                tiles.indexOf(tile) + 1,
               ),
         ),
       );
@@ -179,26 +50,243 @@ class PdfGenerator {
     );
   }
 
-  pw.Widget _buildDetailRow(String label, String value) {
-    return pw.Padding(
-      padding: const pw.EdgeInsets.symmetric(vertical: 3),
-      child: pw.Row(
-        children: [
-          pw.Container(
-            width: 70,
-            child: pw.Text(
-              '$label:',
-              style: pw.TextStyle(fontSize: 12, color: PdfColors.grey800),
-            ),
-          ),
-          pw.Expanded(
-            child: pw.Text(
-              value,
-              style: pw.TextStyle(fontSize: 12, fontWeight: pw.FontWeight.bold),
-            ),
-          ),
-        ],
+  /// Generate PDF for a single tile
+  Future<void> generateSingleTilePdf(BuildContext context, Tile tile) async {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text("Generating tile PDF...")));
+
+    final pdf = pw.Document();
+    final logoImage = await _loadLogo();
+
+    pw.MemoryImage? tileImage;
+    try {
+      if (tile.imageUrl != null && tile.imageUrl!.isNotEmpty) {
+        final response = await http.get(Uri.parse(tile.imageUrl!));
+        tileImage = pw.MemoryImage(response.bodyBytes);
+      }
+    } catch (e) {
+      print('Failed to load image for tile: ${tile.code}, error: $e');
+    }
+
+    pdf.addPage(
+      pw.Page(
+        orientation: pw.PageOrientation.portrait,
+        margin: const pw.EdgeInsets.all(0),
+        build: (context) => _buildTilePage(tile, logoImage, tileImage, 1),
       ),
     );
+
+    await Printing.layoutPdf(
+      onLayout: (format) => pdf.save(),
+      name:
+          '${tile.code}_tile_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
+    );
+  }
+
+  /// Load company logo from assets
+  Future<pw.MemoryImage> _loadLogo() async {
+    final ByteData logoData = await rootBundle.load('assets/logo.jpg');
+    final Uint8List logoBytes = logoData.buffer.asUint8List();
+    return pw.MemoryImage(logoBytes);
+  }
+
+  /// Load tile images into memory
+  Future<Map<String, pw.MemoryImage>> _loadTileImages(List<Tile> tiles) async {
+    final Map<String, pw.MemoryImage> tileImages = {};
+    for (final tile in tiles) {
+      try {
+        if (tile.imageUrl != null && tile.imageUrl!.isNotEmpty) {
+          final response = await http.get(Uri.parse(tile.imageUrl!));
+          tileImages[tile.code] = pw.MemoryImage(response.bodyBytes);
+        }
+      } catch (e) {
+        print('Failed to load image for tile: ${tile.code}, error: $e');
+      }
+    }
+    return tileImages;
+  }
+
+  /// Build a PDF page layout for a tile
+  pw.Widget _buildTilePage(
+    Tile tile,
+    pw.MemoryImage logoImage,
+    pw.MemoryImage? tileImage,
+    int index,
+  ) {
+    return pw.Row(
+      crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+      children: [
+        // Left Panel
+        pw.Container(
+          width: 250,
+          color: PdfColors.blueGrey800,
+          padding: const pw.EdgeInsets.all(20),
+          child: pw.Column(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.center,
+            children: [
+              pw.Container(
+                height: 100,
+                width: 100,
+                child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+              ),
+              pw.Text(
+                'Royal Traders',
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  color: PdfColors.white,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
+              pw.SizedBox(height: 40),
+              pw.Column(
+                children: [
+                  pw.SizedBox(height: 20),
+                  pw.Text(
+                    'Company: ${tile.companyName}',
+                    style: pw.TextStyle(fontSize: 18, color: PdfColors.white),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    'Tone: ${tile.tone}',
+                    style: pw.TextStyle(fontSize: 18, color: PdfColors.white),
+                  ),
+                  pw.SizedBox(height: 10),
+                  pw.Text(
+                    'Code: ${tile.code}',
+                    style: pw.TextStyle(fontSize: 18, color: PdfColors.white),
+                  ),
+                ],
+              ),
+              pw.Container(
+                width: 30,
+                height: 30,
+                decoration: pw.BoxDecoration(
+                  color: PdfColors.amber700,
+                  borderRadius: pw.BorderRadius.circular(2),
+                ),
+                alignment: pw.Alignment.center,
+                child: pw.Text(
+                  '$index',
+                  style: pw.TextStyle(
+                    color: PdfColors.white,
+                    fontSize: 14,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Right Content
+        pw.Expanded(
+          child: pw.Column(
+            crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+            children: [
+              pw.SizedBox(height: 50),
+              pw.Center(
+                child: pw.Container(
+                  width: 350,
+                  height: 50,
+                  color: PdfColors.blue900,
+                  alignment: pw.Alignment.center,
+                  child: pw.Text(
+                    '(${tile.size}) ${_formatDimensions(tile.size)}',
+                    style: pw.TextStyle(
+                      fontSize: 20,
+                      color: PdfColors.white,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              pw.Expanded(
+                child: pw.Row(
+                  crossAxisAlignment: pw.CrossAxisAlignment.stretch,
+                  children: [
+                    pw.Expanded(
+                      flex: 10,
+                      child: pw.Column(
+                        mainAxisAlignment: pw.MainAxisAlignment.spaceEvenly,
+                        children: [
+                          pw.Expanded(
+                            child: pw.Container(
+                              width: double.infinity,
+                              color: PdfColors.grey200,
+                              child:
+                                  tileImage != null
+                                      ? pw.Image(
+                                        width: 350,
+                                        height: 400,
+                                        tileImage,
+                                        fit: pw.BoxFit.contain,
+                                      )
+                                      : pw.Center(
+                                        child: pw.Text(
+                                          'No Image Available',
+                                          style: pw.TextStyle(fontSize: 16),
+                                        ),
+                                      ),
+                            ),
+                          ),
+                          pw.Container(
+                            width: 170,
+                            height: 60,
+                            color: PdfColors.blue900,
+                            padding: const pw.EdgeInsets.all(10),
+                            child: pw.Column(
+                              crossAxisAlignment: pw.CrossAxisAlignment.center,
+                              mainAxisAlignment: pw.MainAxisAlignment.center,
+                              children: [
+                                pw.Text(
+                                  'Code: ${tile.code}',
+                                  style: pw.TextStyle(
+                                    fontSize: 14,
+                                    color: PdfColors.white,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                                pw.SizedBox(height: 5),
+                                pw.Text(
+                                  'Stock: ${tile.stock} BOX',
+                                  style: pw.TextStyle(
+                                    fontSize: 14,
+                                    color: PdfColors.white,
+                                    fontWeight: pw.FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              pw.SizedBox(height: 100),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatDimensions(String size) {
+    final parts = size.split('x');
+    if (parts.length == 2) {
+      try {
+        final width = int.parse(parts[0]);
+        final height = int.parse(parts[1]);
+        final inchesWidth = (width / 25.4).round();
+        final inchesHeight = (height / 25.4).round();
+        return '${inchesWidth}X${inchesHeight} AAA';
+      } catch (e) {
+        return 'Unknown';
+      }
+    }
+    return size;
   }
 }
