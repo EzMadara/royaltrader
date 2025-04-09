@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:royaltrader/components/pdf_generator.dart';
 import 'package:royaltrader/config/routes/routes_name.dart';
 import 'package:royaltrader/models/tile_model.dart';
 
@@ -18,6 +19,15 @@ class TileDetailsScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         title: const Text('Tile Details'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.picture_as_pdf),
+            onPressed: () async {
+              final pdfGenerator = PdfGenerator();
+              await pdfGenerator.generateSingleTilePdf(context, tile);
+            },
+          ),
+        ],
       ),
 
       body: SingleChildScrollView(

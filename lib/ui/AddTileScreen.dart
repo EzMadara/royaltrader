@@ -45,14 +45,49 @@ class _AddTileScreenState extends State<AddTileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-
-    if (image != null) {
-      setState(() {
-        _imagePath = image.path;
-      });
-    }
+    showModalBottomSheet(
+      context: context,
+      builder: (context) {
+        return SafeArea(
+          child: Wrap(
+            children: [
+              ListTile(
+                leading: const Icon(Icons.camera_alt),
+                title: const Text('Take a photo'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final image = await picker.pickImage(
+                    source: ImageSource.camera,
+                  );
+                  if (image != null) {
+                    setState(() {
+                      _imagePath = image.path;
+                    });
+                  }
+                },
+              ),
+              ListTile(
+                leading: const Icon(Icons.photo_library),
+                title: const Text('Choose from gallery'),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final picker = ImagePicker();
+                  final image = await picker.pickImage(
+                    source: ImageSource.gallery,
+                  );
+                  if (image != null) {
+                    setState(() {
+                      _imagePath = image.path;
+                    });
+                  }
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -232,8 +267,12 @@ class _AddTileScreenState extends State<AddTileScreen> {
                     if (value == null || value.isEmpty) {
                       return 'Please enter stock quantity';
                     }
-                    if (int.tryParse(value) == null) {
+                    final stock = int.tryParse(value);
+                    if (stock == null) {
                       return 'Please enter a valid number';
+                    }
+                    if (stock == 0) {
+                      return 'Stock cannot be 0';
                     }
                     return null;
                   },

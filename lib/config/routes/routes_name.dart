@@ -1,5 +1,3 @@
-// lib/config/routes/routes_name.dart
-
 class RoutesName {
   // Authentication Routes
   static const String splashScreen = 'splash_screen';
@@ -9,7 +7,6 @@ class RoutesName {
   static const String registerScreen = 'register_screen';
 
   // Tile Inventory Routes
-  static const String tilesList = 'tiles_list';
   static const String addTile = 'add_tile';
   static const String editTile = 'edit_tile';
   static const String tileDetails = 'tile_details';

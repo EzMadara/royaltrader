@@ -40,7 +40,6 @@ class AppTileWidget extends StatelessWidget {
             IconButton(
               icon: const Icon(Icons.edit, color: Colors.blue),
               onPressed: () {
-                // Navigate to edit screen
                 Navigator.pushNamed(context, '/edit-tile', arguments: tile);
               },
             ),
@@ -77,7 +76,6 @@ class AppTileWidget extends StatelessWidget {
       );
     }
 
-    // Fallback to placeholder
     return Container(
       width: 60,
       height: 60,
@@ -103,7 +101,6 @@ class AppTileWidget extends StatelessWidget {
               ),
               TextButton(
                 onPressed: () {
-                  // Delete and close dialog
                   context.read<TileCubit>().deleteTile(tile.id);
                   Navigator.pop(context);
                 },

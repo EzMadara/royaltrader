@@ -17,6 +17,7 @@ class DropdownField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       decoration: InputDecoration(
         enabledBorder: OutlineInputBorder(
           borderSide: const BorderSide(color: Color(0xFFCCD0D4), width: 1.1),
@@ -31,7 +32,14 @@ class DropdownField extends StatelessWidget {
           borderSide: const BorderSide(color: Color(0xFFCCD0D4), width: 1.1),
           borderRadius: BorderRadius.circular(4),
         ),
-
+        errorBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.red, width: 1.1),
+          borderRadius: BorderRadius.circular(4),
+        ),
+        focusedErrorBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: Colors.red, width: 1.4),
+          borderRadius: BorderRadius.circular(4),
+        ),
         fillColor: !isFloatLabel ? Colors.grey.shade100 : null,
       ),
       dropdownColor: Colors.white,

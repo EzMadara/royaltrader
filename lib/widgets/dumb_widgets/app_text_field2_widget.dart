@@ -41,6 +41,7 @@ class AppTextField2 extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      autovalidateMode: AutovalidateMode.onUserInteraction,
       controller: controller,
       validator: validator,
       keyboardType: keyboardType,
@@ -76,6 +77,14 @@ class AppTextField2 extends StatelessWidget {
                 color: Color(0xFFCCD0D4),
                 width: 1.1,
               ),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Colors.red, width: 1.1),
+              borderRadius: BorderRadius.circular(4),
+            ),
+            focusedErrorBorder: OutlineInputBorder(
+              borderSide: const BorderSide(color: Colors.red, width: 1.4),
               borderRadius: BorderRadius.circular(4),
             ),
             contentPadding: const EdgeInsets.symmetric(
