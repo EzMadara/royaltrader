@@ -120,18 +120,18 @@ class _LoginScreenState extends State<LoginScreen> {
                               RoutesName.registerScreen,
                             );
                           },
-                          child: Text(
-                            'Register?',
-                            style: Theme.of(context).textTheme.labelMedium,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              RoutesName.forgotMyPassword,
-                            );
-                          },
+                          //   child: Text(
+                          //     'Register?',
+                          //     style: Theme.of(context).textTheme.labelMedium,
+                          //   ),
+                          // ),
+                          // TextButton(
+                          //   onPressed: () {
+                          //     Navigator.pushNamed(
+                          //       context,
+                          //       RoutesName.forgotMyPassword,
+                          //     );
+                          //   },
                           child: Text(
                             'Forgot Password?',
                             style: Theme.of(context).textTheme.labelMedium,
