@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:uuid/uuid.dart';
 import '../models/tile_model.dart';
 
@@ -12,10 +13,8 @@ class TileRepository {
 
   String? get _currentUserId => _auth.currentUser?.uid;
 
-  // Check if a user is logged in
   bool get isUserLoggedIn => _currentUserId != null;
 
-  // Get all tiles for the current user
   Future<List<Tile>> getUserTiles() async {
     try {
       // Ensure user is logged in
@@ -26,7 +25,7 @@ class TileRepository {
       final snapshot =
           await _firestore
               .collection(_tilesCollection)
-              .where('userId', isEqualTo: _currentUserId)
+              // .where('userId', isEqualTo: _currentUserId)
               .get();
       return snapshot.docs
           .map((doc) => Tile.fromMap(doc.data() as Map<String, dynamic>))
@@ -48,7 +47,7 @@ class TileRepository {
       final snapshot =
           await _firestore
               .collection(_tilesCollection)
-              .where('userId', isEqualTo: _currentUserId)
+              // .where('userId', isEqualTo: _currentUserId)
               .get();
 
       final tiles =
@@ -77,7 +76,6 @@ class TileRepository {
         return false;
       }
 
-      // Create a tile with ID and current user ID
       final tileWithId = tile.copyWith(id: _uuid.v4(), userId: _currentUserId);
 
       // Add the tile to Firestore
@@ -112,12 +110,12 @@ class TileRepository {
         return false;
       }
 
-      final existingTile = Tile.fromMap(tileDoc.data() as Map<String, dynamic>);
+      // final existingTile = Tile.fromMap(tileDoc.data() as Map<String, dynamic>);
 
       // Check if the tile belongs to the current user
-      if (existingTile.userId != _currentUserId) {
-        return false; // Not authorized to update this tile
-      }
+      // if (existingTile.userId != _currentUserId) {
+      //   return false; // Not authorized to update this tile
+      // }
 
       // Ensure we keep the original userId when updating
       final tileToUpdate = updatedTile.copyWith(userId: _currentUserId);
@@ -154,10 +152,20 @@ class TileRepository {
       final existingTile = Tile.fromMap(tileDoc.data() as Map<String, dynamic>);
 
       // Check if the tile belongs to the current user
-      if (existingTile.userId != _currentUserId) {
-        return false; // Not authorized to delete this tile
-      }
+      // if (existingTile.userId != _currentUserId) {
+      //   return false; // Not authorized to delete this tile
+      // }
 
+      if (existingTile.imageUrl != null && existingTile.imageUrl!.isNotEmpty) {
+        try {
+          await FirebaseStorage.instance
+              .refFromURL(existingTile.imageUrl!)
+              .delete();
+        } catch (e) {
+          print('Error deleting image from Firebase Storage: $e');
+          // Handle the error gracefully if necessary
+        }
+      }
       // Delete the tile from Firestore
       await _firestore.collection(_tilesCollection).doc(id).delete();
 
