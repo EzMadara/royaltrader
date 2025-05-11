@@ -16,6 +16,7 @@ import 'package:royaltrader/widgets/dumb_widgets/company_dropdown.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:uuid/uuid.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:royaltrader/widgets/dumb_widgets/custom_dropdown.dart';
 
 class AddTileScreen extends StatefulWidget {
   const AddTileScreen({Key? key}) : super(key: key);
@@ -30,10 +31,29 @@ class _AddTileScreenState extends State<AddTileScreen> {
   final _sizeController = TextEditingController();
   final _toneController = TextEditingController();
   final _stockController = TextEditingController();
+  final _boxQuantityController = TextEditingController();
   String? _selectedCompany;
+  String? _selectedTileType;
+  String? _selectedTileColor;
+  String? _selectedTileSize;
 
   DateTime _selectedDate = DateTime.now();
   String? _imagePath;
+
+  final List<String> _tileTypes = ['polish', 'matt', 'candy'];
+  final List<String> _tileColors = ['Light', 'Dark', 'Motive'];
+  final List<String> _tileSizes = [
+    '2*2',
+    '2*4',
+    '16*16',
+    '12*24',
+    '12*36',
+    '18*36',
+    '12*32',
+    '6*32',
+    '8*36',
+    '8*48',
+  ];
 
   @override
   void dispose() {
@@ -41,6 +61,7 @@ class _AddTileScreenState extends State<AddTileScreen> {
     _sizeController.dispose();
     _toneController.dispose();
     _stockController.dispose();
+    _boxQuantityController.dispose();
     super.dispose();
   }
 
@@ -138,10 +159,13 @@ class _AddTileScreenState extends State<AddTileScreen> {
       final newTile = Tile(
         id: '', // to be set in backend
         code: _codeController.text,
-        size: _sizeController.text,
+        size: _selectedTileSize ?? '',
         companyName: _selectedCompany ?? '',
         tone: _toneController.text,
         stock: int.parse(_stockController.text),
+        boxQuantity: int.parse(_boxQuantityController.text),
+        tileType: _selectedTileType ?? '',
+        tileColor: _selectedTileColor ?? '',
         date: _selectedDate,
         imageUrl: imageUrl,
         userId: currentUser.uid,
@@ -229,16 +253,77 @@ class _AddTileScreenState extends State<AddTileScreen> {
                     });
                   },
                 ),
-
+                const SizedBox(height: 16),
+                CustomDropdown(
+                  labelText: 'Tile Size',
+                  value: _selectedTileSize,
+                  items: _tileSizes,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTileSize = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomDropdown(
+                  labelText: 'Tile Type',
+                  value: _selectedTileType,
+                  items: _tileTypes,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTileType = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomDropdown(
+                  labelText: 'Tile Color',
+                  value: _selectedTileColor,
+                  items: _tileColors,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTileColor = value;
+                    });
+                  },
+                ),
                 const SizedBox(height: 16),
                 AppTextField2(
-                  labelText: 'Size',
-                  helpText: 'Enter tile size',
+                  labelText: 'Tiles Quantity',
+                  helpText: 'Enter tiles quantity',
                   isFloatLabel: false,
-                  controller: _sizeController,
+                  keyboardType: TextInputType.number,
+                  controller: _stockController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter tile size';
+                      return 'Please enter tiles quantity';
+                    }
+                    final stock = int.tryParse(value);
+                    if (stock == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (stock == 0) {
+                      return 'Quantity cannot be 0';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                AppTextField2(
+                  labelText: 'Box Quantity',
+                  helpText: 'Enter box quantity',
+                  isFloatLabel: false,
+                  keyboardType: TextInputType.number,
+                  controller: _boxQuantityController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter box quantity';
+                    }
+                    final quantity = int.tryParse(value);
+                    if (quantity == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (quantity == 0) {
+                      return 'Quantity cannot be 0';
                     }
                     return null;
                   },
@@ -252,27 +337,6 @@ class _AddTileScreenState extends State<AddTileScreen> {
                   validator: (value) {
                     if (value == null || value.isEmpty) {
                       return 'Please enter tile tone';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                AppTextField2(
-                  labelText: 'Stock',
-                  helpText: 'Enter stock quantity',
-                  isFloatLabel: false,
-                  keyboardType: TextInputType.number,
-                  controller: _stockController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter stock quantity';
-                    }
-                    final stock = int.tryParse(value);
-                    if (stock == null) {
-                      return 'Please enter a valid number';
-                    }
-                    if (stock == 0) {
-                      return 'Stock cannot be 0';
                     }
                     return null;
                   },

@@ -9,6 +9,9 @@ class Tile {
   final String companyName;
   final String tone;
   final int stock;
+  final int boxQuantity;
+  final String tileType;
+  final String tileColor;
   final String? imageUrl;
   final String userId;
 
@@ -20,6 +23,9 @@ class Tile {
     required this.companyName,
     required this.tone,
     required this.stock,
+    required this.boxQuantity,
+    required this.tileType,
+    required this.tileColor,
     this.imageUrl,
     required this.userId,
   });
@@ -32,6 +38,9 @@ class Tile {
     String? companyName,
     String? tone,
     int? stock,
+    int? boxQuantity,
+    String? tileType,
+    String? tileColor,
     String? imageUrl,
     String? userId,
   }) {
@@ -43,6 +52,9 @@ class Tile {
       companyName: companyName ?? this.companyName,
       tone: tone ?? this.tone,
       stock: stock ?? this.stock,
+      boxQuantity: boxQuantity ?? this.boxQuantity,
+      tileType: tileType ?? this.tileType,
+      tileColor: tileColor ?? this.tileColor,
       imageUrl: imageUrl ?? this.imageUrl,
       userId: userId ?? this.userId,
     );
@@ -57,6 +69,9 @@ class Tile {
       'companyName': companyName,
       'tone': tone,
       'stock': stock,
+      'boxQuantity': boxQuantity,
+      'tileType': tileType,
+      'tileColor': tileColor,
       'imageUrl': imageUrl,
       'userId': userId,
     };
@@ -71,6 +86,9 @@ class Tile {
       companyName: map['companyName'] ?? '',
       tone: map['tone'] ?? '',
       stock: map['stock'] ?? 0,
+      boxQuantity: map['boxQuantity'] ?? 0,
+      tileType: map['tileType'] ?? '',
+      tileColor: map['tileColor'] ?? '',
       imageUrl: map['imageUrl'],
       userId: map['userId'],
     );
@@ -82,7 +100,7 @@ class Tile {
 
   @override
   String toString() {
-    return 'Tile(id: $id, date: $date, code: $code, size: $size, companyName: $companyName, tone: $tone, stock: $stock, userId: $userId)';
+    return 'Tile(id: $id, date: $date, code: $code, size: $size, companyName: $companyName, tone: $tone, stock: $stock, boxQuantity: $boxQuantity, tileType: $tileType, tileColor: $tileColor, userId: $userId)';
   }
 
   @override
@@ -97,7 +115,10 @@ class Tile {
         other.companyName == companyName &&
         other.tone == tone &&
         other.userId == userId &&
-        other.stock == stock;
+        other.stock == stock &&
+        other.boxQuantity == boxQuantity &&
+        other.tileType == tileType &&
+        other.tileColor == tileColor;
   }
 
   @override
@@ -109,6 +130,9 @@ class Tile {
         companyName.hashCode ^
         tone.hashCode ^
         userId.hashCode ^
-        stock.hashCode;
+        stock.hashCode ^
+        boxQuantity.hashCode ^
+        tileType.hashCode ^
+        tileColor.hashCode;
   }
 }

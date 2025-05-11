@@ -52,6 +52,14 @@ class HomeDrawer extends StatelessWidget {
             ),
             onTap: onLogout,
           ),
+          ListTile(
+            leading: const Icon(Icons.inventory),
+            title: Text(
+              "Invoice",
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            onTap: null,
+          ),
         ],
       ),
     );

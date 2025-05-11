@@ -144,9 +144,9 @@ class TileCard extends StatelessWidget {
             fontWeight: FontWeight.w500,
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: 5),
         Icon(Icons.straighten, size: 14, color: Colors.grey[600]),
-        const SizedBox(width: 4),
+        const SizedBox(width: 3),
         Text(
           'Size: ${tile.size}',
           style: GoogleFonts.poppins(

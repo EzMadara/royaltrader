@@ -14,6 +14,7 @@ import 'package:royaltrader/widgets/dumb_widgets/app_text_field_widget.dart';
 import 'package:royaltrader/widgets/dumb_widgets/company_dropdown.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:uuid/uuid.dart';
+import 'package:royaltrader/widgets/dumb_widgets/custom_dropdown.dart';
 
 class EditTileScreen extends StatefulWidget {
   final Tile tile;
@@ -30,11 +31,30 @@ class _EditTileScreenState extends State<EditTileScreen> {
   late final TextEditingController _sizeController;
   late final TextEditingController _toneController;
   late final TextEditingController _stockController;
+  late final TextEditingController _boxQuantityController;
   String? _selectedCompany;
+  String? _selectedTileType;
+  String? _selectedTileColor;
+  String? _selectedTileSize;
 
   late DateTime _selectedDate;
   String? _imageUrl;
   File? _newImageFile;
+
+  final List<String> _tileTypes = ['polish', 'matt', 'candy'];
+  final List<String> _tileColors = ['Light', 'Dark', 'Motive'];
+  final List<String> _tileSizes = [
+    '2*2',
+    '2*4',
+    '16*16',
+    '12*24',
+    '12*36',
+    '18*36',
+    '12*32',
+    '6*32',
+    '8*36',
+    '8*48',
+  ];
 
   @override
   void initState() {
@@ -46,8 +66,14 @@ class _EditTileScreenState extends State<EditTileScreen> {
     _stockController = TextEditingController(
       text: widget.tile.stock.toString(),
     );
+    _boxQuantityController = TextEditingController(
+      text: widget.tile.boxQuantity.toString(),
+    );
     _selectedDate = widget.tile.date;
     _imageUrl = widget.tile.imageUrl;
+    _selectedTileType = widget.tile.tileType;
+    _selectedTileColor = widget.tile.tileColor;
+    _selectedTileSize = widget.tile.size;
   }
 
   @override
@@ -56,6 +82,7 @@ class _EditTileScreenState extends State<EditTileScreen> {
     _sizeController.dispose();
     _toneController.dispose();
     _stockController.dispose();
+    _boxQuantityController.dispose();
     super.dispose();
   }
 
@@ -116,10 +143,13 @@ class _EditTileScreenState extends State<EditTileScreen> {
 
       final updatedTile = widget.tile.copyWith(
         code: _codeController.text,
-        size: _sizeController.text,
+        size: _selectedTileSize ?? widget.tile.size,
         companyName: _selectedCompany ?? widget.tile.companyName,
         tone: _toneController.text,
         stock: int.parse(_stockController.text),
+        boxQuantity: int.parse(_boxQuantityController.text),
+        tileType: _selectedTileType ?? widget.tile.tileType,
+        tileColor: _selectedTileColor ?? widget.tile.tileColor,
         date: _selectedDate,
         imageUrl: imageUrl,
       );
@@ -192,44 +222,89 @@ class _EditTileScreenState extends State<EditTileScreen> {
                   },
                 ),
                 const SizedBox(height: 16),
-                AppTextField2(
-                  labelText: 'Size',
-                  helpText: 'Enter tile size',
-                  isFloatLabel: false,
-                  controller: _sizeController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter tile size';
-                    }
-                    return null;
+                CustomDropdown(
+                  labelText: 'Tile Size',
+                  value: _selectedTileSize ?? '',
+                  items: _tileSizes,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTileSize = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomDropdown(
+                  labelText: 'Tile Type',
+                  value: _selectedTileType ?? '',
+                  items: _tileTypes,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTileType = value;
+                    });
+                  },
+                ),
+                const SizedBox(height: 16),
+                CustomDropdown(
+                  labelText: 'Tile Color',
+                  value: _selectedTileColor,
+                  items: _tileColors,
+                  onChanged: (value) {
+                    setState(() {
+                      _selectedTileColor = value;
+                    });
                   },
                 ),
                 const SizedBox(height: 16),
                 AppTextField2(
-                  labelText: 'Tone',
-                  helpText: 'Enter tile tone',
-                  isFloatLabel: false,
-                  controller: _toneController,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Please enter tile tone';
-                    }
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 16),
-                AppTextField2(
-                  labelText: 'Stock',
-                  helpText: 'Enter stock quantity',
+                  labelText: 'Tiles Quantity',
+                  helpText: 'Tiles Quantity',
                   isFloatLabel: false,
                   keyboardType: TextInputType.number,
                   controller: _stockController,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter stock quantity';
+                      return 'Please enter tiles quantity';
                     }
-                    if (int.tryParse(value) == null) {
+                    final stock = int.tryParse(value);
+                    if (stock == null) {
                       return 'Please enter a valid number';
+                    }
+                    if (stock == 0) {
+                      return 'Quantity cannot be 0';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                AppTextField2(
+                  labelText: 'Box Quantity',
+                  helpText: 'Box Quantity',
+                  isFloatLabel: false,
+                  keyboardType: TextInputType.number,
+                  controller: _boxQuantityController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter box quantity';
+                    }
+                    final quantity = int.tryParse(value);
+                    if (quantity == null) {
+                      return 'Please enter a valid number';
+                    }
+                    if (quantity == 0) {
+                      return 'Quantity cannot be 0';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                AppTextField2(
+                  labelText: 'Tile Tone',
+                  helpText: 'Tile Tone',
+                  isFloatLabel: false,
+                  controller: _toneController,
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Please enter tile tone';
                     }
                     return null;
                   },
