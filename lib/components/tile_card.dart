@@ -132,28 +132,38 @@ class TileCard extends StatelessWidget {
   }
 
   Widget _buildTileInfo() {
-    return Row(
+    return Wrap(
+      spacing: 8,
       children: [
-        Icon(Icons.qr_code, size: 14, color: Colors.grey[600]),
-        const SizedBox(width: 4),
-        Text(
-          'Code: ${tile.code}',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.qr_code, size: 14, color: Colors.grey[600]),
+            const SizedBox(width: 4),
+            Text(
+              'Code: ${tile.code}',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 5),
-        Icon(Icons.straighten, size: 14, color: Colors.grey[600]),
-        const SizedBox(width: 3),
-        Text(
-          'Size: ${tile.size}',
-          style: GoogleFonts.poppins(
-            fontSize: 13,
-            color: Colors.grey[600],
-            fontWeight: FontWeight.w500,
-          ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.straighten, size: 14, color: Colors.grey[600]),
+            const SizedBox(width: 3),
+            Text(
+              'Size: ${tile.size}',
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ],
     );
@@ -172,12 +182,16 @@ class TileCard extends StatelessWidget {
         children: [
           Icon(Icons.palette, size: 14, color: Colors.blue[700]),
           const SizedBox(width: 4),
-          Text(
-            'Tone: ${tile.tone}',
-            style: GoogleFonts.poppins(
-              fontSize: 12,
-              color: Colors.blue[700],
-              fontWeight: FontWeight.w500,
+          Flexible(
+            child: Text(
+              'Tone: ${tile.tone}',
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                color: Colors.blue[700],
+                fontWeight: FontWeight.w500,
+              ),
+              overflow: TextOverflow.ellipsis,
+              maxLines: 1,
             ),
           ),
         ],
