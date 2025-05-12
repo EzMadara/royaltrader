@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:royaltrader/const/resource.dart';
+import 'package:royaltrader/config/routes/routes_name.dart';
 
 class HomeDrawer extends StatelessWidget {
   final VoidCallback onGeneratePdf;
@@ -58,7 +59,10 @@ class HomeDrawer extends StatelessWidget {
               "Invoice",
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            onTap: null,
+            onTap: () {
+              Navigator.pop(context);
+              Navigator.pushNamed(context, RoutesName.invoiceScreen);
+            },
           ),
         ],
       ),

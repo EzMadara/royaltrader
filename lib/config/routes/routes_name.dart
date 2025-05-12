@@ -10,4 +10,5 @@ class RoutesName {
   static const String addTile = 'add_tile';
   static const String editTile = 'edit_tile';
   static const String tileDetails = 'tile_details';
+  static const String invoiceScreen = 'invoice_screen';
 }

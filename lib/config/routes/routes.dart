@@ -9,6 +9,7 @@ import 'package:royaltrader/ui/SplashScreen.dart';
 import 'package:royaltrader/ui/AddTileScreen.dart';
 import 'package:royaltrader/ui/EditTileScreen.dart';
 import 'package:royaltrader/ui/TileDetailsScreen.dart';
+import 'package:royaltrader/ui/InvoiceScreen.dart';
 
 class Routes {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -38,6 +39,8 @@ class Routes {
         return MaterialPageRoute(
           builder: (context) => TileDetailsScreen(tile: tile),
         );
+      case RoutesName.invoiceScreen:
+        return MaterialPageRoute(builder: (context) => const InvoiceScreen());
 
       default:
         return MaterialPageRoute(builder: (context) => const Splashscreen());

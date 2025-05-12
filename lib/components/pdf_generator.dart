@@ -289,4 +289,176 @@ class PdfGenerator {
     }
     return size;
   }
+
+  Future<void> generateInvoicePdf(
+    BuildContext context, {
+    required Map<String, int> cart,
+    required Map<String, Tile> tileDetails,
+    required String address,
+    required String contactPerson1,
+    required String contactNumber1,
+    required String contactPerson2,
+    required String contactNumber2,
+  }) async {
+    final pdf = pw.Document();
+    final logoImage = await _loadLogo();
+
+    pdf.addPage(
+      pw.Page(
+        orientation: pw.PageOrientation.portrait,
+        margin: const pw.EdgeInsets.all(20),
+        build:
+            (context) => _buildInvoicePage(
+              cart: cart,
+              tileDetails: tileDetails,
+              logoImage: logoImage,
+              address: address,
+              contactPerson1: contactPerson1,
+              contactNumber1: contactNumber1,
+              contactPerson2: contactPerson2,
+              contactNumber2: contactNumber2,
+            ),
+      ),
+    );
+
+    await Printing.layoutPdf(
+      onLayout: (format) => pdf.save(),
+      name: 'invoice_${DateFormat('yyyyMMdd').format(DateTime.now())}.pdf',
+    );
+  }
+
+  pw.Widget _buildInvoicePage({
+    required Map<String, int> cart,
+    required Map<String, Tile> tileDetails,
+    required pw.MemoryImage logoImage,
+    required String address,
+    required String contactPerson1,
+    required String contactNumber1,
+    required String contactPerson2,
+    required String contactNumber2,
+  }) {
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        // Header
+        pw.Row(
+          mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+          children: [
+            pw.Container(
+              height: 80,
+              width: 80,
+              child: pw.Image(logoImage, fit: pw.BoxFit.contain),
+            ),
+            pw.Column(
+              crossAxisAlignment: pw.CrossAxisAlignment.end,
+              children: [
+                pw.Text(
+                  'Royal Traders',
+                  style: pw.TextStyle(
+                    fontSize: 24,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
+                pw.Text(address, style: const pw.TextStyle(fontSize: 12)),
+                pw.Text(
+                  'Contact: $contactPerson1 ($contactNumber1)',
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+                pw.Text(
+                  'Contact: $contactPerson2 ($contactNumber2)',
+                  style: const pw.TextStyle(fontSize: 12),
+                ),
+              ],
+            ),
+          ],
+        ),
+        pw.SizedBox(height: 20),
+        pw.Text(
+          'INVOICE',
+          style: pw.TextStyle(fontSize: 20, fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 10),
+        pw.Text(
+          'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+          style: const pw.TextStyle(fontSize: 12),
+        ),
+        pw.SizedBox(height: 20),
+
+        // Items Table
+        pw.Table(
+          border: pw.TableBorder.all(),
+          children: [
+            // Table Header
+            pw.TableRow(
+              decoration: pw.BoxDecoration(color: PdfColors.grey300),
+              children: [
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    'Code',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    'Company',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    'Size',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+                pw.Padding(
+                  padding: const pw.EdgeInsets.all(8),
+                  child: pw.Text(
+                    'Quantity',
+                    style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                  ),
+                ),
+              ],
+            ),
+            // Table Items
+            ...cart.entries.map((entry) {
+              final tile = tileDetails[entry.key]!;
+              return pw.TableRow(
+                children: [
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Text(tile.code),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Text(tile.companyName),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Text(tile.size),
+                  ),
+                  pw.Padding(
+                    padding: const pw.EdgeInsets.all(8),
+                    child: pw.Text(entry.value.toString()),
+                  ),
+                ],
+              );
+            }).toList(),
+          ],
+        ),
+        pw.SizedBox(height: 20),
+        pw.Text(
+          'Total Items: ${cart.values.fold(0, (sum, quantity) => sum + quantity)}',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+        ),
+        pw.SizedBox(height: 40),
+        pw.Text(
+          'Thank you for your business!',
+          style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+        ),
+      ],
+    );
+  }
 }
