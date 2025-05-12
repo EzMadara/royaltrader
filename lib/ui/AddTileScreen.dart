@@ -289,7 +289,7 @@ class _AddTileScreenState extends State<AddTileScreen> {
                 const SizedBox(height: 16),
                 AppTextField2(
                   labelText: 'Tiles Quantity',
-                  helpText: 'Enter tiles quantity',
+                  helpText: 'Tiles Quantity',
                   isFloatLabel: false,
                   keyboardType: TextInputType.number,
                   controller: _stockController,
@@ -310,7 +310,7 @@ class _AddTileScreenState extends State<AddTileScreen> {
                 const SizedBox(height: 16),
                 AppTextField2(
                   labelText: 'Box Quantity',
-                  helpText: 'Enter box quantity',
+                  helpText: 'Box Quantity',
                   isFloatLabel: false,
                   keyboardType: TextInputType.number,
                   controller: _boxQuantityController,
@@ -330,8 +330,8 @@ class _AddTileScreenState extends State<AddTileScreen> {
                 ),
                 const SizedBox(height: 16),
                 AppTextField2(
-                  labelText: 'Tone',
-                  helpText: 'Enter tile tone',
+                  labelText: 'Tile Tone',
+                  helpText: 'Tile Tone',
                   isFloatLabel: false,
                   controller: _toneController,
                   validator: (value) {

@@ -361,11 +361,11 @@ class PdfGenerator {
                 ),
                 pw.Text(address, style: const pw.TextStyle(fontSize: 12)),
                 pw.Text(
-                  'Contact: $contactPerson1 ($contactNumber1)',
+                  '$contactPerson1 ($contactNumber1)',
                   style: const pw.TextStyle(fontSize: 12),
                 ),
                 pw.Text(
-                  'Contact: $contactPerson2 ($contactNumber2)',
+                  '$contactPerson2 ($contactNumber2)',
                   style: const pw.TextStyle(fontSize: 12),
                 ),
               ],
