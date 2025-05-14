@@ -9,6 +9,9 @@ class TileState extends Equatable {
   final String? errorMessage;
   final TileStatus status;
   final String filterCompany;
+  final String filterTileType;
+  final String filterSize;
+  final String filterColor;
 
   const TileState({
     this.tiles = const [],
@@ -16,6 +19,9 @@ class TileState extends Equatable {
     this.errorMessage,
     this.status = TileStatus.initial,
     this.filterCompany = '',
+    this.filterTileType = '',
+    this.filterSize = '',
+    this.filterColor = '',
   });
 
   TileState copyWith({
@@ -24,6 +30,9 @@ class TileState extends Equatable {
     String? errorMessage,
     TileStatus? status,
     String? filterCompany,
+    String? filterTileType,
+    String? filterSize,
+    String? filterColor,
   }) {
     return TileState(
       tiles: tiles ?? this.tiles,
@@ -31,6 +40,9 @@ class TileState extends Equatable {
       errorMessage: errorMessage,
       status: status ?? this.status,
       filterCompany: filterCompany ?? this.filterCompany,
+      filterTileType: filterTileType ?? this.filterTileType,
+      filterSize: filterSize ?? this.filterSize,
+      filterColor: filterColor ?? this.filterColor,
     );
   }
 
@@ -41,5 +53,8 @@ class TileState extends Equatable {
     errorMessage,
     status,
     filterCompany,
+    filterTileType,
+    filterSize,
+    filterColor,
   ];
 }

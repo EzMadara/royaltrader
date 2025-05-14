@@ -61,35 +61,75 @@ class TileCubit extends Cubit<TileState> {
   // }
 
   Future<void> searchTilesByCompany(String companyName) async {
-    if (companyName.isEmpty) {
-      emit(
-        state.copyWith(filteredTiles: state.tiles, status: TileStatus.loaded),
-      );
-    } else {
-      final filtered =
-          state.tiles.where((tile) {
-            return tile.companyName.toLowerCase().contains(
-              companyName.toLowerCase(),
-            );
-          }).toList();
-
-      emit(state.copyWith(filteredTiles: filtered, status: TileStatus.loaded));
-    }
+    emit(state.copyWith(filterCompany: companyName));
+    _applyFilters();
   }
 
-  // Helper method to apply filter
-  List<Tile> _applyFilter(List<Tile> tiles, String companyName) {
-    if (companyName.isEmpty) {
-      return tiles;
-    }
-    return tiles
-        .where(
-          (tile) => tile.companyName.toLowerCase().contains(
-            companyName.toLowerCase(),
-          ),
-        )
-        .toList();
+  void filterByTileType(String tileType) {
+    emit(state.copyWith(filterTileType: tileType));
+    _applyFilters();
   }
+
+  void filterBySize(String size) {
+    emit(state.copyWith(filterSize: size));
+    _applyFilters();
+  }
+
+  void filterByColor(String color) {
+    emit(state.copyWith(filterColor: color));
+    _applyFilters();
+  }
+
+  void _applyFilters() {
+    final filtered =
+        state.tiles.where((tile) {
+          final matchesCompany =
+              state.filterCompany.isEmpty ||
+              tile.companyName.toLowerCase().contains(
+                state.filterCompany.toLowerCase(),
+              );
+
+          final matchesTileType =
+              state.filterTileType.isEmpty ||
+              tile.tileType.toLowerCase() == state.filterTileType.toLowerCase();
+
+          final matchesSize =
+              state.filterSize.isEmpty ||
+              tile.size.toLowerCase() == state.filterSize.toLowerCase();
+
+          final matchesColor =
+              state.filterColor.isEmpty ||
+              tile.tileColor.toLowerCase() == state.filterColor.toLowerCase();
+
+          return matchesCompany &&
+              matchesTileType &&
+              matchesSize &&
+              matchesColor;
+        }).toList();
+
+    emit(state.copyWith(filteredTiles: filtered, status: TileStatus.loaded));
+  }
+
+  // Predefined values for filters
+  static const List<String> tileTypes = ['polish', 'matt', 'candy'];
+  static const List<String> tileColors = ['Light', 'Dark', 'Motive'];
+  static const List<String> tileSizes = [
+    '2*2',
+    '2*4',
+    '16*16',
+    '12*24',
+    '12*36',
+    '18*36',
+    '12*32',
+    '6*32',
+    '8*36',
+    '8*48',
+  ];
+
+  // Helper methods to get filter values
+  List<String> getUniqueTileTypes() => tileTypes;
+  List<String> getUniqueSizes() => tileSizes;
+  List<String> getUniqueColors() => tileColors;
 
   // Add a new tile
   Future<void> addTile(Tile tile) async {

@@ -76,6 +76,110 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 SearchFilterWidget(searchController: _searchController),
                 const SizedBox(height: 12),
+                BlocBuilder<TileCubit, TileState>(
+                  builder: (context, state) {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Tile Type',
+                              border: OutlineInputBorder(),
+                            ),
+                            value:
+                                state.filterTileType.isEmpty
+                                    ? null
+                                    : state.filterTileType,
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('Types'),
+                              ),
+                              ...context
+                                  .read<TileCubit>()
+                                  .getUniqueTileTypes()
+                                  .map(
+                                    (type) => DropdownMenuItem<String>(
+                                      value: type,
+                                      child: Text(type),
+                                    ),
+                                  ),
+                            ],
+                            onChanged: (value) {
+                              context.read<TileCubit>().filterByTileType(
+                                value ?? '',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Size',
+                              border: OutlineInputBorder(),
+                            ),
+                            value:
+                                state.filterSize.isEmpty
+                                    ? null
+                                    : state.filterSize,
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('Sizes'),
+                              ),
+                              ...context.read<TileCubit>().getUniqueSizes().map(
+                                (size) => DropdownMenuItem<String>(
+                                  value: size,
+                                  child: Text(size),
+                                ),
+                              ),
+                            ],
+                            onChanged: (value) {
+                              context.read<TileCubit>().filterBySize(
+                                value ?? '',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: DropdownButtonFormField<String>(
+                            decoration: const InputDecoration(
+                              labelText: 'Color',
+                              border: OutlineInputBorder(),
+                            ),
+                            value:
+                                state.filterColor.isEmpty
+                                    ? null
+                                    : state.filterColor,
+                            items: [
+                              const DropdownMenuItem<String>(
+                                value: '',
+                                child: Text('Colors'),
+                              ),
+                              ...context
+                                  .read<TileCubit>()
+                                  .getUniqueColors()
+                                  .map(
+                                    (color) => DropdownMenuItem<String>(
+                                      value: color,
+                                      child: Text(color),
+                                    ),
+                                  ),
+                            ],
+                            onChanged: (value) {
+                              context.read<TileCubit>().filterByColor(
+                                value ?? '',
+                              );
+                            },
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
                 Expanded(
                   child: BlocBuilder<TileCubit, TileState>(
                     builder: (context, state) {
